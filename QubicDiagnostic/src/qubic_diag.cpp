@@ -16,9 +16,12 @@
 #define NUMBER_TEST_PROCESSORS 256
 
 
+#define LOOP_COUNT_TEST 10000
+#define LOOP_COUNT_TEST_SMALL 1000
 #define MAX_NUMBER_TEST_PROCESSORS 256
 typedef struct
 {
+    char lock;
     bool isReady;
     bool isBSProc;
     unsigned long long id;
@@ -30,6 +33,8 @@ typedef struct
     unsigned int package;
     unsigned int core;
     unsigned int thread;
+
+    bool testResult;
 
 } Processor;
 static volatile int shutDownNode = 0;
@@ -95,7 +100,7 @@ inline static unsigned int random(const unsigned int range)
 
 
 template <unsigned long long len>
-void K12Test(unsigned char* outputResult = NULL)
+bool K12Test(unsigned char* outputResult = NULL)
 {
     unsigned char input[64];
     unsigned char ouput[len];
@@ -110,10 +115,7 @@ void K12Test(unsigned char* outputResult = NULL)
     // Checking the overflow buffer
     for (unsigned int i = 0; i < sizeof(overflow_checking); i++) {
         if (i != overflow_checking[i]) {
-            ACQUIRE(logMessageLock);
-            logToConsole(L"Overflow detection");
-            RELEASE(logMessageLock);
-            return;
+            return false;
         }
     }
 
@@ -122,6 +124,7 @@ void K12Test(unsigned char* outputResult = NULL)
     {
         KangarooTwelve(ouput, len, outputResult, 32);
     }
+    return true;
 }
 
 EFI_STATUS TestStackLimitTemplateK12() {
@@ -129,52 +132,100 @@ EFI_STATUS TestStackLimitTemplateK12() {
     static unsigned char output[32];
     constexpr unsigned int kb_size = 1024;
     bs->Stall(1000000);
-    K12Test<32 * kb_size>(output);
+    if (!K12Test<32 * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<64 * kb_size>(output);
+    if (!K12Test<64 * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<512 * kb_size>(output);
+    if (!K12Test<512 * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(512 + 16)* kb_size>(output);
+    if (!K12Test<(512 + 16) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(512 + 32)* kb_size>(output);
+    if (!K12Test<(512 + 32) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(512 + 64)* kb_size>(output);
+    if (!K12Test<(512 + 64) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(512 + 128)* kb_size>(output);
+    if (!K12Test<(512 + 128) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(1024)* kb_size>(output);
+    if (!K12Test<(1024) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(1024 + 16)* kb_size>(output);
+    if (!K12Test<(1024 + 16) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(1024 + 32)* kb_size>(output);
+    if (!K12Test<(1024 + 32) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(1024 + 64)* kb_size>(output);
+    if (!K12Test<(1024 + 64) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(1024 + 128)* kb_size>(output);
+    if (!K12Test<(1024 + 128) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(1024 + 256)* kb_size>(output);
+    if (!K12Test<(1024 + 256) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(1024 + 512)* kb_size>(output);
+    if (!K12Test<(1024 + 512) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(1024 + 512 + 48)* kb_size>(output);
+    if (!K12Test<(1024 + 512 + 48) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     bs->Stall(1000000);
-    K12Test<(1599)* kb_size>(output);
+    if (!K12Test<(1599) * kb_size>(output))
+    {
+        return EFI_BAD_BUFFER_SIZE;
+    }
 
     return EFI_SUCCESS;
 }
@@ -186,226 +237,230 @@ void TestStackLimitTemplateK12Processor(void* proccessorInfo) {
     CHAR16 messageK12[512];
 
     Processor* process = (Processor*)proccessorInfo;
+    bool testResult = true;
     switch (process->testCase)
     {
     case 4:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<4 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<4 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 8:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<8 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<8 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 12:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<12 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<12 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 16:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<16 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<16 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 20:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<20 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<20 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 24:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<24 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<24 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 28:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<28 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<28 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 29:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<29 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<29 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 30:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<30 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<30 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 31:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<31 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<31 * kb_size>(&(process->buffer[0]));
         }
         break;
         // 32KB
     case 32:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<32 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<32 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 36:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST; i++)
         {
-            K12Test<36 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<36 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 40:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<40 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<40 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 44:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<44 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<44 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 48:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<48 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<48 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 52:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<52 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<52 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 56:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<56 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<56 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 60:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST; i++)
         {
-            K12Test<60 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<60 * kb_size>(&(process->buffer[0]));
         }
         break;
         // 64KB
     case 64:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<64 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<64 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 68:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<68 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<68 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 72:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<72 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<72 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 76:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<76 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<76 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 80:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<80 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<80 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 84:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<84 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<84 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 88:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
             K12Test<88 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 82:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<92 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<92 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 96:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<96 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<96 * kb_size>(&(process->buffer[0]));
         }
         break;
         // 128KB
     case 128:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<128 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<128 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 512:
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST && testResult; i++)
         {
-            K12Test<512 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<512 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 900:
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST_SMALL && testResult; i++)
         {
-            K12Test<900 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<900 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 990:
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST_SMALL && testResult; i++)
         {
-            K12Test<990 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<990 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 1000:
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST_SMALL && testResult; i++)
         {
-            K12Test<1000 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<1000 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 1024:
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST_SMALL && testResult; i++)
         {
-            K12Test<1024 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<1024 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 1500:
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST_SMALL && testResult; i++)
         {
-            K12Test<1500 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<1500 * kb_size>(&(process->buffer[0]));
         }
         break;
     case 1599: // Maximum size set by /Gs
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < LOOP_COUNT_TEST_SMALL && testResult; i++)
         {
-            K12Test<1599 * kb_size>(&(process->buffer[0]));
+            testResult = K12Test<1599 * kb_size>(&(process->buffer[0]));
         }
         break;
     default:
         break;
     }
-    process->isReady = true;
+    process->testResult = testResult;
 
+    ACQUIRE(process->lock);
+    process->isReady = true;
+    RELEASE(process->lock);
 }
 
 
@@ -616,6 +671,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
             status = mpServicesProtocol->GetProcessorInfo(mpServicesProtocol, i, &procInfo);
             processors[i].id = procInfo.ProcessorId;
             processors[i].StatusFlag = procInfo.StatusFlag;
+            processors[i].lock = 0;
             if (procInfo.StatusFlag & 0x1)
             {
                 processors[i].isBSProc = true;
@@ -656,7 +712,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
         {
             setText(loginfo, L"Test ");
             appendNumber(loginfo, testCases[test], false);
-            appendText(loginfo, L" KB");
+            appendText(loginfo, L" KB ...");
             logToConsole(loginfo);
 
             // Start the task for all application Proccessor
@@ -675,13 +731,26 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
             TestStackLimitTemplateK12Processor(&processors[bsProcID]);
 
             // Wait for all task is done
+            bool isAllTestPassed = true;
             for (int i = 0; i < numberOfAllProcessors; i++)
             {
-                while (!processors[i].isReady)
+                bool isReady = false;
+                while (!isReady)
                 {
-                    //processKeyPresses();
+                    ACQUIRE(processors[i].lock);
+                    isReady = processors[i].isReady;
+                    RELEASE(processors[i].lock);
                 }
                 processors[i].isReady = false;
+
+                // Check the result
+                if (!processors[i].testResult)
+                {
+                    isAllTestPassed = false;
+                    setText(loginfo, L"Corruption at core ");
+                    appendNumber(loginfo, i, false);
+                    logToConsole(loginfo);
+                }
 
                 //CHAR16 digestChars[61];
                 //getIdentity(processors[i].buffer, digestChars, true);
@@ -698,7 +767,15 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
             }
             setText(loginfo, L"***Test ");
             appendNumber(loginfo, testCases[test], false);
-            appendText(loginfo, L" KB is PASSED");
+            appendText(loginfo, L" KB");
+            if (isAllTestPassed)
+            {
+                appendText(loginfo, L" is PASSED");
+            }
+            else
+            {
+                appendText(loginfo, L" is FAILED");
+            }
             logToConsole(loginfo);
 
             bs->Stall(1000000);
