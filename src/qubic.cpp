@@ -704,6 +704,8 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
             {
                 setText(buffer, L"processBroadcastTick of own computor verified: ");
                 appendNumber(buffer, request->tick.computorIndex, FALSE);
+                appendText(buffer, L", tick ");
+                appendNumber(buffer, request->tick.tick, FALSE);
                 addDebugMessage(buffer);
             }
 
@@ -749,6 +751,8 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
             CHAR16 buffer[100];
             setText(buffer, L"processBroadcastTick of computor NOT VERIFIED: ");
             appendNumber(buffer, request->tick.computorIndex, FALSE);
+            appendText(buffer, L", tick ");
+            appendNumber(buffer, request->tick.tick, FALSE);
             addDebugMessage(buffer);
         }
     }
@@ -3680,7 +3684,6 @@ static void tickProcessor(void*)
                     tickDataSuits = true;
                 }
 
-                addDebugMessage(L"before 'if (!tickDataSuits)'");
                 if (!tickDataSuits)
                 {
                     unsigned int tickTotalNumberOfComputors = 0;
@@ -3807,7 +3810,6 @@ static void tickProcessor(void*)
                         }
                     }
 
-                    addDebugMessage(L"before 'if (numberOfKnownNextTickTransactions != numberOfNextTickTransactions)'");
                     if (numberOfKnownNextTickTransactions != numberOfNextTickTransactions)
                     {
                         requestedTickTransactions.requestedTickTransactions.tick = nextTick;
@@ -3837,7 +3839,7 @@ static void tickProcessor(void*)
                             etalonTick.expectedNextTickTransactionDigest = _mm256_setzero_si256();
                         }
 
-                        addDebugMessage(L"before broadcast tick 1");
+                        //addDebugMessage(L"before broadcast tick 1");
                         if (system.tick > system.latestCreatedTick || system.tick == system.initialTick)
                         {
                             addDebugMessage(L"before broadcast tick 2");
@@ -3874,7 +3876,6 @@ static void tickProcessor(void*)
                                 system.latestCreatedTick = system.tick;
                             }
                         }
-                        addDebugMessage(L"after broadcast tick");
 
                         const Tick* tsCompTicks = ts.ticks.getByTickIndex(currentTickIndex);
 
