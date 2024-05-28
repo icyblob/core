@@ -688,8 +688,14 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
         request->tick.computorIndex ^= BroadcastTick::type;
         KangarooTwelve(&request->tick, sizeof(Tick) - SIGNATURE_SIZE, digest, sizeof(digest));
         request->tick.computorIndex ^= BroadcastTick::type;
+        
+        CHAR16 buffer[100];
+        setText(buffer, L"processBroadcastTick of computor: ");
+        appendNumber(buffer, request->tick.computorIndex, FALSE);
+        addDebugMessage(buffer);
         if (verify(broadcastedComputors.computors.publicKeys[request->tick.computorIndex].m256i_u8, digest, request->tick.signature))
         {
+            addDebugMessage(L"verified");
             if (header->isDejavuZero())
             {
                 enqueueResponse(NULL, header);
@@ -713,12 +719,14 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
                     || request->tick.expectedNextTickTransactionDigest != tsTick->expectedNextTickTransactionDigest)
                 {
                     faultyComputorFlags[request->tick.computorIndex >> 6] |= (1ULL << (request->tick.computorIndex & 63));
+                    addDebugMessage(L"faulty");
                 }
             }
             else
             {
                 // Copy the sent tick to the tick storage
                 bs->CopyMem(tsTick, &request->tick, sizeof(Tick));
+                addDebugMessage(L"copied");
             }
 
             ts.ticks.releaseLock(request->tick.computorIndex);
@@ -3652,6 +3660,7 @@ static void tickProcessor(void*)
                     tickDataSuits = true;
                 }
 
+                addDebugMessage(L"before 'if (!tickDataSuits)'");
                 if (!tickDataSuits)
                 {
                     unsigned int tickTotalNumberOfComputors = 0;
@@ -3778,6 +3787,7 @@ static void tickProcessor(void*)
                         }
                     }
 
+                    addDebugMessage(L"before 'if (numberOfKnownNextTickTransactions != numberOfNextTickTransactions)'");
                     if (numberOfKnownNextTickTransactions != numberOfNextTickTransactions)
                     {
                         requestedTickTransactions.requestedTickTransactions.tick = nextTick;
@@ -3807,10 +3817,13 @@ static void tickProcessor(void*)
                             etalonTick.expectedNextTickTransactionDigest = _mm256_setzero_si256();
                         }
 
+                        addDebugMessage(L"before broadcast tick 1");
                         if (system.tick > system.latestCreatedTick || system.tick == system.initialTick)
                         {
+                            addDebugMessage(L"before broadcast tick 2");
                             if (mainAuxStatus & 1)
                             {
+                                addDebugMessage(L"before broadcast tick 3");
                                 BroadcastTick broadcastTick;
                                 bs->CopyMem(&broadcastTick.tick, &etalonTick, sizeof(Tick));
                                 for (unsigned int i = 0; i < numberOfOwnComputorIndices; i++)
@@ -3841,6 +3854,7 @@ static void tickProcessor(void*)
                                 system.latestCreatedTick = system.tick;
                             }
                         }
+                        addDebugMessage(L"after broadcast tick");
 
                         const Tick* tsCompTicks = ts.ticks.getByTickIndex(currentTickIndex);
 
