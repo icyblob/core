@@ -689,12 +689,24 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
         KangarooTwelve(&request->tick, sizeof(Tick) - SIGNATURE_SIZE, digest, sizeof(digest));
         request->tick.computorIndex ^= BroadcastTick::type;
         
+        bool isOwnComputor = false;
+        for (int i = 0; i < numberOfOwnComputorIndices; ++i)
+            if (request->tick.computorIndex == ownComputorIndices[i])
+            {
+                isOwnComputor = true;
+                break;
+            }
+
         if (verify(broadcastedComputors.computors.publicKeys[request->tick.computorIndex].m256i_u8, digest, request->tick.signature))
         {
             CHAR16 buffer[100];
-            setText(buffer, L"processBroadcastTick of computor verified: ");
-            appendNumber(buffer, request->tick.computorIndex, FALSE);
-            addDebugMessage(buffer);
+            if (isOwnComputor)
+            {
+                setText(buffer, L"processBroadcastTick of own computor verified: ");
+                appendNumber(buffer, request->tick.computorIndex, FALSE);
+                addDebugMessage(buffer);
+            }
+
             if (header->isDejavuZero())
             {
                 enqueueResponse(NULL, header);
