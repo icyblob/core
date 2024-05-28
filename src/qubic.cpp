@@ -689,13 +689,12 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
         KangarooTwelve(&request->tick, sizeof(Tick) - SIGNATURE_SIZE, digest, sizeof(digest));
         request->tick.computorIndex ^= BroadcastTick::type;
         
-        CHAR16 buffer[100];
-        setText(buffer, L"processBroadcastTick of computor: ");
-        appendNumber(buffer, request->tick.computorIndex, FALSE);
-        addDebugMessage(buffer);
         if (verify(broadcastedComputors.computors.publicKeys[request->tick.computorIndex].m256i_u8, digest, request->tick.signature))
         {
-            addDebugMessage(L"verified");
+            CHAR16 buffer[100];
+            setText(buffer, L"processBroadcastTick of computor verified: ");
+            appendNumber(buffer, request->tick.computorIndex, FALSE);
+            addDebugMessage(buffer);
             if (header->isDejavuZero())
             {
                 enqueueResponse(NULL, header);
@@ -719,17 +718,26 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
                     || request->tick.expectedNextTickTransactionDigest != tsTick->expectedNextTickTransactionDigest)
                 {
                     faultyComputorFlags[request->tick.computorIndex >> 6] |= (1ULL << (request->tick.computorIndex & 63));
-                    addDebugMessage(L"faulty");
+                    CHAR16 buffer[100];
+                    setText(buffer, L"FAULTY ComputorIndex: ");
+                    appendNumber(buffer, request->tick.computorIndex, FALSE);
+                    addDebugMessage(buffer);
                 }
             }
             else
             {
                 // Copy the sent tick to the tick storage
                 bs->CopyMem(tsTick, &request->tick, sizeof(Tick));
-                addDebugMessage(L"copied");
             }
 
             ts.ticks.releaseLock(request->tick.computorIndex);
+        }
+        else
+        {
+            CHAR16 buffer[100];
+            setText(buffer, L"processBroadcastTick of computor NOT VERIFIED: ");
+            appendNumber(buffer, request->tick.computorIndex, FALSE);
+            addDebugMessage(buffer);
         }
     }
 }

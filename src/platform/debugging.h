@@ -16,7 +16,7 @@ static void addDebugMessage(const CHAR16* msg){} // empty impl
 
 #else
 
-static CHAR16 debugMessage[128][16384];
+static CHAR16 debugMessage[256][16384];
 static int debugMessageCount = 0;
 static char volatile debugLogLock = 0;
 
@@ -95,7 +95,7 @@ static void printDebugMessages()
 static void addDebugMessage(const CHAR16* msg)
 {
     ACQUIRE(debugLogLock);
-    if (debugMessageCount < 128)
+    if (debugMessageCount < 256)
     {
         setText(debugMessage[debugMessageCount], msg);
         ++debugMessageCount;
@@ -107,7 +107,7 @@ static void addDebugMessage(const CHAR16* msg)
 static void addDebugMessageAssert(const CHAR16* message, const CHAR16* file, const unsigned int lineNumber)
 {
     ACQUIRE(debugLogLock);
-    if (debugMessageCount < 128)
+    if (debugMessageCount < 256)
     {
         setText(debugMessage[debugMessageCount], L"Assertion failed: ");
         appendText(debugMessage[debugMessageCount], message);
