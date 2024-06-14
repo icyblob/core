@@ -2203,7 +2203,7 @@ static void processTick(unsigned long long processorNumber)
     {
         auto* tsCurrentTickTransactionOffsets = ts.tickTransactionOffsets.getByTickIndex(tickIndex);
 #if ADDON_TX_STATUS_REQUEST
-        tickTxIndexStart[system.tick - system.initialTick] = numberOfTransactions; // qli: part of tx_status_request add-on
+        txStatusData.tickTxIndexStart[system.tick - system.initialTick] = numberOfTransactions; // qli: part of tx_status_request add-on
 #endif
         bs->SetMem(entityPendingTransactionIndices, sizeof(entityPendingTransactionIndices), 0);
         // reset solution task queue
@@ -2273,7 +2273,7 @@ static void processTick(unsigned long long processorNumber)
 
                         numberOfTransactions++;
 #if ADDON_TX_STATUS_REQUEST
-                        tickTxIndexStart[system.tick - system.initialTick + 1] = numberOfTransactions; // qli: part of tx_status_request add-on
+                        txStatusData.tickTxIndexStart[system.tick - system.initialTick + 1] = numberOfTransactions; // qli: part of tx_status_request add-on
 #endif
                         if (decreaseEnergy(spectrumIndex, transaction->amount))
                         {
@@ -3381,6 +3381,14 @@ static bool saveAllNodeStates()
         return false;
     }
 
+#if ADDON_TX_STATUS_REQUEST
+    if (!saveStateTxStatus(numberOfTransactions, directory))
+    {
+        logToConsole(L"Failed to save tx status");
+        return false;
+    }
+#endif
+
     return true;
 }
 
@@ -3515,6 +3523,14 @@ static bool loadAllNodeStates()
         logToConsole(L"Failed to load miner solution flag");
         return false;
     }
+
+#if ADDON_TX_STATUS_REQUEST
+    if (!loadStateTxStatus(numberOfTransactions, directory))
+    {
+        logToConsole(L"Failed to load tx status");
+        return false;
+    }
+#endif
 
     return true;
 }
