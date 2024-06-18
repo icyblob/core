@@ -13,7 +13,13 @@ static unsigned char computorSeeds[][55 + 1] = {
 // Enter static IPs of peers (ideally at least 4 including your own IP) to disseminate them to other peers.
 // You can find current peer IPs at https://app.qubic.li/network/live
 static const unsigned char knownPublicPeers[][4] = {
-    {127, 0, 0, 1}, // REMOVE THIS ENTRY AND REPLACE IT WITH YOUR OWN IP ADDRESSES
+    {145, 239, 161, 41 },
+  {84, 75, 0, 69},
+  {45, 152, 160, 19},
+  {45, 152, 160, 15},
+  {62, 113, 194, 90},
+  {194, 45, 36, 158},
+  {62, 2, 219, 174},
 };
 
 // Enter static IPs that shall be prioritized in incoming connection
