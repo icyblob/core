@@ -255,6 +255,39 @@ static long long save(CHAR16* fileName, unsigned long long totalSize, unsigned c
 #endif
 }
 
+static long long append(CHAR16* fileName, unsigned long long totalSize, unsigned char* buffer, CHAR16* directory = NULL)
+{
+#ifdef NO_UEFI
+    logToConsole(L"NO_UEFI implementation of append() is missing! No file append!");
+    return 0;
+#else
+    // Open debug log file and seek to the end of file for appending
+    EFI_STATUS status;
+    EFI_FILE_PROTOCOL* file = nullptr;
+    if (status = root->Open(root, (void**)&file, fileName, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0))
+    {
+        logStatusToConsole(L"EFI_FILE_PROTOCOL.Open() fails", status, __LINE__);
+        file = nullptr;
+        return -1;
+    }
+    else
+    {
+        if (status = root->SetPosition(file, 0xFFFFFFFFFFFFFFFF))
+        {
+            logStatusToConsole(L"EFI_FILE_PROTOCOL.SetPosition() fails", status, __LINE__);
+            file = nullptr;
+            return -1;
+        }
+    }
+
+    // Write to log file
+    if (file && EFI_SUCCESS == file->Write(file, &totalSize, buffer))
+    {
+        file->Close(file);
+    }
+    return 1;
+#endif
+}
 
 static bool initFilesystem()
 {
