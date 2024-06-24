@@ -281,6 +281,18 @@ static void logToConsole(const CHAR16* message)
 #endif
 }
 
+bool CheckContractChange()
+{
+    for (unsigned int digestIndex = 0; digestIndex < MAX_NUMBER_OF_CONTRACTS; digestIndex++)
+    {
+        if (contractStateChangeFlags[digestIndex >> 6] & (1ULL << (digestIndex & 63)))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 static int spectrumIndex(const m256i& publicKey)
 {
@@ -2050,8 +2062,26 @@ static void contractProcessor(void*)
             if (system.epoch >= contractDescriptions[executedContractIndex].constructionEpoch
                 && system.epoch < contractDescriptions[executedContractIndex].destructionEpoch)
             {
+                if (CheckContractChange())
+                {
+                    addDebugMessage(L"BEGIN_TICK change 1");
+                }
+                else
+                {
+                    addDebugMessage(L"BEGIN_TICK NO change 1");
+                }
+
                 QpiContextSystemProcedureCall qpiContext(executedContractIndex);
                 qpiContext.call(BEGIN_TICK);
+
+                if (CheckContractChange())
+                {
+                    addDebugMessage(L"BEGIN_TICK change after qpiContext.call");
+                }
+                else
+                {
+                    addDebugMessage(L"BEGIN_TICK NO change after qpiContext.call");
+                }
             }
         }
     }
@@ -2557,12 +2587,32 @@ static void processTick(unsigned long long processorNumber)
         }
     }
 
+    if (CheckContractChange())
+    {
+        addDebugMessage(L"processTick: Before BEGIN_TICK change");
+    }
+    else
+    {
+        addDebugMessage(L"processTick: Before BEGIN_TICK NO change");
+    }
+
+
     contractProcessorPhase = BEGIN_TICK;
     contractProcessorState = 1;
     while (contractProcessorState)
     {
         _mm_pause();
     }
+
+    if (CheckContractChange())
+    {
+        addDebugMessage(L"processTick: After BEGIN_TICK change");
+    }
+    else
+    {
+        addDebugMessage(L"processTick: After BEGIN_TICK NO change");
+    }
+
 
     unsigned int tickIndex = ts.tickToIndexCurrentEpoch(system.tick);
     ts.tickData.acquireLock();
@@ -3235,6 +3285,7 @@ static void initializeFirstTick()
     }
 }
 #endif
+
 
 static void tickProcessor(void*)
 {
