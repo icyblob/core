@@ -129,6 +129,7 @@ static unsigned char* entityPendingTransactions = NULL;
 static unsigned char* entityPendingTransactionDigests = NULL;
 static unsigned int entityPendingTransactionIndices[SPECTRUM_CAPACITY];
 static unsigned long long spectrumChangeFlags[SPECTRUM_CAPACITY / (sizeof(unsigned long long) * 8)];
+static unsigned long long spectrumChangeIndices[SPECTRUM_CAPACITY / (sizeof(unsigned long long) * 8)];
 static m256i* spectrumDigests = NULL;
 const unsigned long long spectrumDigestsSizeInByte = (SPECTRUM_CAPACITY * 2 - 1) * 32ULL;
 
@@ -2658,14 +2659,21 @@ static void processTick(unsigned long long processorNumber)
     {
         PROFILE_START(L"spectrumDigest", processorNumber);
         unsigned int digestIndex;
+        unsigned long long spectrumChangeCount = 0;
         ACQUIRE(spectrumLock);
         for (digestIndex = 0; digestIndex < SPECTRUM_CAPACITY; digestIndex++)
         {
             if (spectrum[digestIndex].latestIncomingTransferTick == system.tick || spectrum[digestIndex].latestOutgoingTransferTick == system.tick)
             {
-                KangarooTwelve64To32(&spectrum[digestIndex], &spectrumDigests[digestIndex]);
                 spectrumChangeFlags[digestIndex >> 6] |= (1ULL << (digestIndex & 63));
+                spectrumChangeIndices[spectrumChangeCount] = digestIndex;
+                spectrumChangeCount++;
             }
+        }
+        for (unsigned long long i = 0; i < spectrumChangeCount; i++)
+        {
+            unsigned long long digestChangedIndex = spectrumChangeIndices[i];
+            KangarooTwelve64To32(&spectrum[digestChangedIndex], &spectrumDigests[digestChangedIndex]);
         }
         unsigned int previousLevelBeginning = 0;
         unsigned int numberOfLeafs = SPECTRUM_CAPACITY;
