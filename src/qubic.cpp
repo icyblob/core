@@ -432,6 +432,7 @@ static void enableAVX()
 // Should only be called from tick processor to avoid concurrent state changes, which can cause race conditions as detailed in FIXME below.
 static void getComputerDigest(m256i& digest)
 {
+    PROFILE_START_PROC(L"getComputerDigest");
     unsigned int digestIndex;
     for (digestIndex = 0; digestIndex < MAX_NUMBER_OF_CONTRACTS; digestIndex++)
     {
@@ -2657,7 +2658,7 @@ static void processTick(unsigned long long processorNumber)
     }
 
     {
-        PROFILE_START(L"spectrumDigest", processorNumber);
+        PROFILE_START(L"processTick:spectrumDigest", processorNumber);
         unsigned int digestIndex;
         unsigned long long spectrumChangeCount = 0;
         ACQUIRE(spectrumLock);
@@ -2698,11 +2699,11 @@ static void processTick(unsigned long long processorNumber)
         RELEASE(spectrumLock);
     }
     {
-        PROFILE_START(L"getUniverseDigest", processorNumber);
+        PROFILE_START(L"processTick:getUniverseDigest", processorNumber);
         getUniverseDigest(etalonTick.saltedUniverseDigest);
     }
     {
-        PROFILE_START(L"getComputerDigest", processorNumber);
+        PROFILE_START(L"processTick:getComputerDigest", processorNumber);
         getComputerDigest(etalonTick.saltedComputerDigest);
     }
 
@@ -3601,6 +3602,7 @@ static void tickProcessor(void*)
         if (broadcastedComputors.computors.epoch == system.epoch
             && ts.tickInCurrentEpochStorage(nextTick))
         {
+            PROFILE_START(L"tickProcessorLoop", processorNumber);
             const unsigned int currentTickIndex = ts.tickToIndexCurrentEpoch(system.tick);
             const unsigned int nextTickIndex = ts.tickToIndexCurrentEpoch(nextTick);
 

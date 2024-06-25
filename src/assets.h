@@ -251,6 +251,7 @@ iteration:
 // Should only be called from tick processor to avoid concurrent asset state changes, which may cause race conditions
 static void getUniverseDigest(m256i& digest)
 {
+    PROFILE_START_PROC(L"getUniverseDigest");
     unsigned int digestIndex;
     for (digestIndex = 0; digestIndex < ASSETS_CAPACITY; digestIndex++)
     {

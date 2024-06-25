@@ -753,6 +753,7 @@ struct ScoreFunction
         bool res = this->getTask(&publicKey, &nonce);
         if (res)
         {
+            PROFILE_START(L"tryProcessSolution", processorNumber);
             (*this)(processorNumber, publicKey, nonce);
             this->finishTask();
         }
