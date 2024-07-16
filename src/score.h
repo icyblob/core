@@ -7,6 +7,7 @@ unsigned long long top_of_stack;
 #include "platform/concurrency.h"
 #include "public_settings.h"
 #include "score_cache.h"
+#include "profiler.h"
 
 
 ////////// Scoring algorithm \\\\\\\\\\
@@ -362,6 +363,7 @@ struct ScoreFunction
 
     void generateSynapse(computeBuffer& cb, int solutionBufIdx, const m256i& publicKey, const m256i& nonce)
     {
+        PROFILE_SECTION("generateSynapse");
         auto& synapses = _synapses[solutionBufIdx];
         cb.k12.initState(publicKey.m256i_u64, nonce.m256i_u64);
         for (unsigned long long i = 0; i < numberOfInputNeurons; i++) {
@@ -378,6 +380,8 @@ struct ScoreFunction
         for (unsigned long long i = numberOfInputNeurons; i < inNeuronsCount; i++) {
             zeroOutSynapses(synapses.inputLength + i * allParamsCount, int(i));
         }
+
+        PROFILE_SECTION_END();
     }
 
 
@@ -625,14 +629,18 @@ struct ScoreFunction
     unsigned int operator()(const unsigned long long processor_Number, const m256i& publicKey, const m256i& nonce)
     {
         int score = 0;
+        unsigned int scoreCacheIndex = 0;
 #if USE_SCORE_CACHE
-        unsigned int scoreCacheIndex = scoreCache.getCacheIndex(publicKey, nonce);
-        score = scoreCache.tryFetching(publicKey, nonce, scoreCacheIndex);
-        if (score >= scoreCache.MIN_VALID_SCORE)
         {
-            return score;
+            PROFILE_SECTION("UseScoreCache");
+            scoreCacheIndex = scoreCache.getCacheIndex(publicKey, nonce);
+            score = scoreCache.tryFetching(publicKey, nonce, scoreCacheIndex);
+            if (score >= scoreCache.MIN_VALID_SCORE)
+            {
+                return score;
+            }
+            score = 0;
         }
-        score = 0;
 #endif
 
         const int solutionBufIdx = (int)(processor_Number % solutionBufferCount);
@@ -645,12 +653,15 @@ struct ScoreFunction
         cb.inputLength = synapses.inputLength;
 
         {
+            PROFILE_SECTION("SetMemCB");
             setMem(cb.bucketPos, sizeof(cb.bucketPos), 0);
             setMem(cb.isGeneratedBucket, sizeof(cb.isGeneratedBucket), false);
+            PROFILE_SECTION_END();
         }
 
         // ComputeInput
         {
+            PROFILE_SECTION("ComputeInput");
             setMem(cb.neurons.inputAtTick, sizeof(cb.neurons.inputAtTick), NOT_CALCULATED);
             for (int i = 0; i < dataLength; i++) {
                 cb.neurons.inputAtTick[0][i] = (char)miningData[i];
@@ -672,12 +683,16 @@ struct ScoreFunction
                     cb.neurons.inputAtTick[tick][dataLength + inputNeuronIndex] = solveNeuron<dataLength, true>(cb, tick, dataLength + inputNeuronIndex);
                 }
             }
+            PROFILE_SECTION_END();
         }
 
-        score = 0;
-        for (unsigned int i = 0; i < dataLength; i++) {
-            if (miningData[i] == cb.neurons.inputAtTick[maxInputDuration][dataLength + numberOfInputNeurons + i]) {
-                score++;
+        {
+            PROFILE_SECTION("AssignScore");
+            score = 0;
+            for (unsigned int i = 0; i < dataLength; i++) {
+                if (miningData[i] == cb.neurons.inputAtTick[maxInputDuration][dataLength + numberOfInputNeurons + i]) {
+                    score++;
+                }
             }
         }
 
