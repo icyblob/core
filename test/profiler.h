@@ -2,7 +2,7 @@
 
 #include "string"
 
-#define ENABLE_PROFILER 0
+#define ENABLE_PROFILER 1
 
 class Profiler {
 public:
