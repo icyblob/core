@@ -26,8 +26,8 @@ struct ScoreFunction
 {
     static constexpr const int inNeuronsCount = numberOfInputNeurons + dataLength;
     static constexpr const int maxNeuronsCount = inNeuronsCount;
-    static constexpr const int allParamsCount = dataLength + numberOfInputNeurons + dataLength;
-    static constexpr unsigned long long synapseInputSize = inNeuronsCount * allParamsCount;
+    static constexpr const unsigned long long allParamsCount = dataLength + numberOfInputNeurons + dataLength;
+    static constexpr unsigned long long synapseInputSize =inNeuronsCount * allParamsCount;
     long long miningData[dataLength];
     struct synapseStruct
     {
@@ -471,7 +471,7 @@ struct ScoreFunction
         const int outNrIdx) {
         char v = 0;
         for (int i = 0; i < neurBefore; i++) {
-            int idx = neuronIdx * allParamsCount + i;
+            unsigned long long idx = neuronIdx * allParamsCount + i;
             const char s = sy[idx];
             if (s == 1 || s == -1 && pNr[i])
             {
@@ -521,7 +521,7 @@ struct ScoreFunction
             }
             if (!cb.isGeneratedSynapse[idx])
             {
-                continueGeneratingSynapseFromCkp(cb.sckpInput[idx][0], (unsigned char*)cb.inputLength + idx * allParamsCount, allParamsCount);
+                continueGeneratingSynapseFromCkp(cb.sckpInput[idx][0], (unsigned char*)cb.inputLength + idx * (unsigned long long)allParamsCount, allParamsCount);
                 zeroOutSynapses(cb.inputLength + idx * allParamsCount, idx);
                 cb.isGeneratedSynapse[idx] = true;
             }
