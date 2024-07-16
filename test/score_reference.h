@@ -15,6 +15,7 @@ template<
 >
 struct ScoreReferenceImplementation
 {
+    static constexpr unsigned long long synapseInputSize = ((unsigned long long)numberOfInputNeurons + dataLength) * (dataLength + numberOfInputNeurons + dataLength);
     long long miningData[dataLength];
 
     //neuron only has values [-1, 0, 1]
@@ -23,11 +24,33 @@ struct ScoreReferenceImplementation
         char input[dataLength + numberOfInputNeurons + dataLength];
         char neuronBuffer[dataLength + numberOfInputNeurons + dataLength];
     } _neurons[solutionBufferCount];
-    struct
+    struct Synapse
     {
-        char inputLength[(numberOfInputNeurons + dataLength) * (dataLength + numberOfInputNeurons + dataLength)];
-    } _synapses[solutionBufferCount];
+        char* inputLength;
+    };
 
+    Synapse _synapses[solutionBufferCount];
+
+    void initMemory()
+    {
+        for (int i = 0; i < solutionBufferCount; i++)
+        {
+            allocatePool(synapseInputSize, (void**) & (_synapses[i].inputLength));
+        }
+    }
+
+    void freeMemory()
+    {
+        for (int i = 0; i < solutionBufferCount; i++)
+        {
+            freePool(_synapses[i].inputLength);
+        }
+    }
+
+    ~ScoreReferenceImplementation()
+    {
+        freeMemory();
+    }
 
     void initMiningData()
     {
@@ -57,7 +80,7 @@ struct ScoreReferenceImplementation
         auto& neuronBufferInput = neurons.neuronBuffer;
         auto& synapses = _synapses[processorNumber];
         memset(&neurons, 0, sizeof(neurons));
-        random(publicKey, nonce, (unsigned char*)&synapses, sizeof(synapses));
+        random(publicKey, nonce, (unsigned char*)synapses.inputLength, synapseInputSize);
         for (unsigned int inputNeuronIndex = 0; inputNeuronIndex < numberOfInputNeurons + dataLength; inputNeuronIndex++)
         {
             for (unsigned int anotherInputNeuronIndex = 0; anotherInputNeuronIndex < dataLength + numberOfInputNeurons + dataLength; anotherInputNeuronIndex++)
