@@ -144,6 +144,7 @@ struct ScoreFunction
         int bucketPos[maxNeuronsCount][129];
         bool isGeneratedBucket[maxNeuronsCount];
         static_assert((allParamsCount) % 8 == 0, "need to check this packed synapse");
+        static_assert(allParamsCount < 0x80000000, "need to check this packed synapse:Out of value that K12 can handle");
 
         queueItem queue[allParamsCount * 2];
         bool isProcessing[allParamsCount * 2];
@@ -368,9 +369,17 @@ struct ScoreFunction
         cb.k12.initState(publicKey.m256i_u64, nonce.m256i_u64);
         for (unsigned long long i = 0; i < numberOfInputNeurons; i++) {
             synapseCheckpoint* p_sckp[1] = { &cb.sckpInput[i][0] };
-            cb.k12.saveCheckpoint(p_sckp);
-            cb.k12.hashWithoutWrite(allParamsCount);
+            {
+                PROFILE_SECTION("generateSynapse:saveCheckpoint");
+                cb.k12.saveCheckpoint(p_sckp);
+                PROFILE_SECTION_END();
+            }
+            {
+                PROFILE_SECTION("generateSynapse:hashWithoutWrite");
+                cb.k12.hashWithoutWrite(allParamsCount);
+            }
             cb.isGeneratedSynapse[i] = false;
+
         };
         cb.k12.scatterFromVector();
         for (unsigned long long i = numberOfInputNeurons; i < inNeuronsCount; i++) {
