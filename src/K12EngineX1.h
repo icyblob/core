@@ -1,28 +1,24 @@
 #pragma once
 
-#define K12_AVX512 1
 
 struct synapseCheckpoint {
     unsigned long long ckp[25];
     int ignoreByteInState;
 };
 
-#if K12_AVX512
+#ifdef __AVX512F__
 
 #include "kangaroo_twelve_avx512.h"
 
-struct K12EngineX1 {
+struct K12EngineX1_AVX512 {
     unsigned long long scatteredStates[25];
     int leftByteInCurrentState;
     V512  Baeiou, Gaeiou, Kaeiou, Maeiou, Saeiou;
 private:
     void _scatterFromVector() {
-        //copyToStateScalar(scatteredStates)
         copyToState_AVX512(scatteredStates);
     }
     void hashNewChunk() {
-        //declareBCDEScalar
-        //    rounds12Scalar
         KeccakP_DeclareVars2
         rounds12_AVX512;
     }
@@ -32,7 +28,7 @@ private:
         leftByteInCurrentState = 200;
     }
 public:
-    K12EngineX1() {}
+    K12EngineX1_AVX512() {}
     void initState(const unsigned long long* comp_u64, const unsigned long long* nonce_u64) {
         setMem(scatteredStates, 25 * sizeof(unsigned long long), 0);
 
@@ -97,7 +93,7 @@ public:
     }
 };
 
-#else
+#endif
 
 
 struct K12EngineX1 {
@@ -184,4 +180,3 @@ public:
     }
 };
 
-#endif

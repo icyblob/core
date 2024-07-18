@@ -7,9 +7,16 @@
     <ClCompile Include="network_messages.cpp" />
     <ClCompile Include="platform.cpp" />
     <ClCompile Include="qpi.cpp" />
+    <ClCompile Include="profiler.cpp" />
+    <ClCompile Include="tx_status_request.cpp" />
+    <ClCompile Include="score.cpp" />
+    <ClCompile Include="score_cache.cpp" />
+    <ClCompile Include="tick_storage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="score_reference.h" />
+    <ClInclude Include="profiler.h" />
+    <ClInclude Include="score_reference_avx512.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

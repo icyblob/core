@@ -35,32 +35,42 @@ struct ScoreTester
     > ScoreFuncOpt;
 
 #ifdef __AVX512F__
-    typedef ScoreReferenceImplementationAVX512<
+    typedef ScoreFunction_AVX512<
         dataLength,
         numberOfInputNeurons, numberOfOutputNeurons,
         maxInputDuration, maxOutputDuration,
         solutionBufferCount
-    > ScoreFuncRef;
-#else
+    > ScoreFuncOpt_AVX512;
+#endif
+
     typedef ScoreReferenceImplementation<
         dataLength,
         numberOfInputNeurons, numberOfOutputNeurons,
         maxInputDuration, maxOutputDuration,
         solutionBufferCount
     > ScoreFuncRef;
-#endif
+
 
     ScoreFuncOpt* score;
+    ScoreFuncOpt_AVX512* score_avx512;
     ScoreFuncRef* score_ref_impl;
 
     ScoreTester()
     {
         score = new ScoreFuncOpt;
+        score_avx512 = new ScoreFuncOpt_AVX512;
         score_ref_impl = new ScoreFuncRef;
+
         memset(score, 0, sizeof(ScoreFuncOpt));
+        memset(score_avx512, 0, sizeof(ScoreFuncOpt));
         memset(score_ref_impl, 0, sizeof(ScoreFuncRef));
+
         EXPECT_TRUE(score->initMemory());
         score->initMiningData(_mm256_setzero_si256());
+
+        EXPECT_TRUE(score_avx512->initMemory());
+        score_avx512->initMiningData(_mm256_setzero_si256());
+
 
         score_ref_impl->initMemory();
         score_ref_impl->initMiningData();
@@ -83,31 +93,25 @@ struct ScoreTester
         auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(d);
         std::cout << "Optimized version: " << elapsed.count() << "ns" << std::endl;
 
-//        t0 = std::chrono::high_resolution_clock::now();
-//        unsigned int reference = (*score_ref_impl)(processorNumber, publicKey, nonce);
-//        t1 = std::chrono::high_resolution_clock::now();
-//        d = t1 - t0;
-//        elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(d);
-//#ifdef __AVX512F__
-//        std::cout << "[AVX512]";
-//#endif
-//        std::cout << "Reference version: " << elapsed.count() << "ns" << std::endl;
+        t0 = std::chrono::high_resolution_clock::now();
+        unsigned int avx512_score = (*score_avx512)(processorNumber, publicKey, nonce);
+        t1 = std::chrono::high_resolution_clock::now();
+        d = t1 - t0;
+        elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(d);
+        std::cout << "AVX512 version: " << elapsed.count() << "ns" << std::endl;
 
 
-        static int test_idx = 0;
+        //static int test_idx = 0;
         // 65k
-        unsigned int reference_list[] = { 77, 97, 77, 99, 81, 91 };
+        //unsigned int reference_list[] = { 77, 97, 77, 99, 81, 91 };
         // 36k
         //unsigned int reference_list[] = { 87, 99, 80, 78, 90, 89 };
+        //unsigned int reference = reference_list[test_idx];
+        //test_idx++;
 
-        
-        unsigned int reference = reference_list[test_idx];
+        std::cout << "current score() returns " << current << ", avx512  score() returns " << avx512_score << std::endl;
+        return current == avx512_score;
 
-        test_idx++;
-
-        std::cout << "current score() returns " << current << ", reference score() returns " << reference << std::endl;
-        //return current == reference;
-        return true;
     }
 };
 
