@@ -33,6 +33,7 @@
     <ClInclude Include="contract_core\stack_buffer.h" />
     <ClInclude Include="K12EngineX1.h" />
     <ClInclude Include="kangaroo_twelve_avx512.h" />
+    <ClInclude Include="kangaroo_twelve_XKCP_avx512.h" />
     <ClInclude Include="logging.h" />
     <ClInclude Include="network_core\peers.h" />
     <ClInclude Include="network_core\tcp4.h" />

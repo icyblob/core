@@ -10,6 +10,8 @@
 
 #ifdef __AVX512F__
 #include "score_reference_avx512.h"
+#include "../src/kangaroo_twelve_XKCP_avx512.h"
+#include "../src/kangaroo_twelve_avx512.h"
 #endif
 
 // reference implementation
@@ -80,6 +82,7 @@ struct ScoreTester
     {
         delete score;
         delete score_ref_impl;
+        delete score_avx512;
     }
 
     bool operator()(const unsigned long long processorNumber, unsigned char* publicKey, unsigned char* nonce)
@@ -98,7 +101,7 @@ struct ScoreTester
         t1 = std::chrono::high_resolution_clock::now();
         d = t1 - t0;
         elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(d);
-        std::cout << "AVX512 version: " << elapsed.count() << "ns" << std::endl;
+        std::cout << "XKCP version: " << elapsed.count() << "ns" << std::endl;
 
 
         //static int test_idx = 0;
@@ -109,7 +112,7 @@ struct ScoreTester
         //unsigned int reference = reference_list[test_idx];
         //test_idx++;
 
-        std::cout << "current score() returns " << current << ", avx512  score() returns " << avx512_score << std::endl;
+        std::cout << "current score() returns " << current << ", XKCP score() returns " << avx512_score << std::endl;
         return current == avx512_score;
 
     }
@@ -120,7 +123,7 @@ template <typename ScoreTester>
 void runCommonTests(ScoreTester& test_score)
 {
 #ifdef __AVX512F__
-    //initAVX512KangarooTwelveConstants();
+    original_avx512::initAVX512KangarooTwelveConstants();
 #endif
     EXPECT_TRUE(test_score(678, m256i(13969805098858910392ULL, 14472806656575993870ULL, 10205949277524717274ULL, 9139973247135990472ULL).m256i_u8, m256i(2606487637113200640ULL, 2267452027856879938ULL, 14495402921700380246ULL, 16315779787892001110ULL).m256i_u8));    
     EXPECT_TRUE(test_score(251, m256i(17764101523024620815ULL, 13444759684604467162ULL, 5205156473815387573ULL, 13260540040653911245ULL).m256i_u8, m256i(2719505187280522860ULL, 796569317027170745ULL, 1472067853669192224ULL, 17746228003132033809ULL).m256i_u8));
@@ -165,15 +168,7 @@ void runCommonTests(ScoreTester& test_score)
 //    runCommonTests(test_score);
 //}
 
-TEST(TestQubicScoreFunction, CurrentLengthNeuronsDurationSettings) {
-    ScoreTester<
-        DATA_LENGTH,
-        NUMBER_OF_INPUT_NEURONS * 2, NUMBER_OF_OUTPUT_NEURONS * 2,
-        MAX_INPUT_DURATION, MAX_OUTPUT_DURATION,
-        1
-    > test_score;
-    runCommonTests(test_score);
-}
+
 
 //TEST(TestQubicScoreFunction, CurrentLengthNeuronsDurationSettings) {
 //    ScoreTester<
@@ -194,3 +189,81 @@ TEST(TestQubicScoreFunction, CurrentLengthNeuronsDurationSettings) {
 //    > test_score;
 //    runCommonTests(test_score);
 //}
+
+TEST(TestQubicScoreFunction, CurrentLengthNeuronsDurationSettings) {
+    ScoreTester<
+        DATA_LENGTH,
+        NUMBER_OF_INPUT_NEURONS * 2, NUMBER_OF_OUTPUT_NEURONS * 2,
+        MAX_INPUT_DURATION, MAX_OUTPUT_DURATION,
+        1
+    > test_score;
+    runCommonTests(test_score);
+}
+
+static constexpr unsigned long long OUTPUT_SIZE = 32;
+static constexpr unsigned long long INPUT_SIZE = (1 << 30);
+
+TEST(TestQubicScoreFunction, CompareAVX512) {
+   
+    std::vector< unsigned char> input(INPUT_SIZE);
+    for (int i = 0; i < INPUT_SIZE; i++) {
+        input[i] = i;
+    }
+
+    std::vector< unsigned char> original(OUTPUT_SIZE);
+    std::vector< unsigned char> original_avx512(OUTPUT_SIZE);
+    std::vector< unsigned char> xkcp_avx512(OUTPUT_SIZE);
+
+    // Original
+    auto t0 = std::chrono::high_resolution_clock::now();
+    KangarooTwelve(input.data(), input.size(), original.data(), original.size());
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto d = t1 - t0;
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(d);
+    std::cout << "Generic version: " << elapsed.count() << "ns" << std::endl;
+
+    // Original AVX512
+    t0 = std::chrono::high_resolution_clock::now();
+    original_avx512::initAVX512KangarooTwelveConstants();
+    original_avx512::KangarooTwelve(input.data(), input.size(), original_avx512.data(), original_avx512.size());
+    t1 = std::chrono::high_resolution_clock::now();
+    d = t1 - t0;
+    elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(d);
+    std::cout << "AVX512 version: " << elapsed.count() << "ns" << std::endl;
+
+    // XKCP AVX512
+    t0 = std::chrono::high_resolution_clock::now();
+    xkpc_avx512::KangarooTwelve(input.data(), input.size(), xkcp_avx512.data(), xkcp_avx512.size());
+    t1 = std::chrono::high_resolution_clock::now();
+    d = t1 - t0;
+    elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(d);
+    std::cout << "XKCP AVX512 version: " << elapsed.count() << "ns" << std::endl;
+
+    bool xkcp_mistmatched = false;
+    bool avx512_mistmatched = false;
+    for (int i = 0; i < OUTPUT_SIZE; i++)
+    {
+        if (xkcp_avx512[i] != original[i])
+        {
+            //std::cout << "XKCP AVX512 mismatch " << (int)xkcp_avx512[i] << " vs expected " << (int)original[i] << std::endl;
+            xkcp_mistmatched = true;
+        }
+        if (original_avx512[i] != original[i])
+        {
+            //std::cout << "AVX512 mismatch " << (int)original_avx512[i] << " vs expected " << (int)original[i] << std::endl;
+            avx512_mistmatched = true;
+        }
+    }
+    if (avx512_mistmatched)
+    {
+        std::cout << "AVX512 mismatch" << std::endl;
+    }
+    if (xkcp_mistmatched)
+    {
+        std::cout << "XKCP mismatch" << std::endl;
+    }
+    EXPECT_TRUE(!avx512_mistmatched && !avx512_mistmatched);
+}
+
+
+

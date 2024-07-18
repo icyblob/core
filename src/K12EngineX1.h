@@ -8,7 +8,7 @@ struct synapseCheckpoint {
 
 #ifdef __AVX512F__
 
-#include "kangaroo_twelve_avx512.h"
+#include "kangaroo_twelve_XKCP_avx512.h"
 
 struct K12EngineX1_AVX512 {
     unsigned long long scatteredStates[25];
@@ -16,11 +16,11 @@ struct K12EngineX1_AVX512 {
     V512  Baeiou, Gaeiou, Kaeiou, Maeiou, Saeiou;
 private:
     void _scatterFromVector() {
-        copyToState_AVX512(scatteredStates);
+        copyToState_xkpc_AVX512(scatteredStates);
     }
     void hashNewChunk() {
         KeccakP_DeclareVars2
-        rounds12_AVX512;
+        rounds12_xkpc_AVX512;
     }
     void hashNewChunkAndSaveToState() {
         hashNewChunk();
@@ -42,7 +42,7 @@ public:
         scatteredStates[7] = nonce_u64[3];
         leftByteInCurrentState = 0;
 
-        copyFromState_AVX512(scatteredStates);
+        copyFromState_xkpc_AVX512(scatteredStates);
     }
     void write(unsigned char* out0, int size) {
         unsigned char* s0 = (unsigned char*)scatteredStates;
@@ -68,7 +68,7 @@ public:
     void saveCheckpoint(synapseCheckpoint** p_sckp) {
         synapseCheckpoint& sckp_0 = *(p_sckp[0]);
         unsigned long long* output0 = sckp_0.ckp;
-        copyToState_AVX512(output0);
+        copyToState_xkpc_AVX512(output0);
             sckp_0.ignoreByteInState = 200 - leftByteInCurrentState;
     }
 

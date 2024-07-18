@@ -249,7 +249,7 @@ struct ScoreFunction_AVX512
         unsigned char* state_u8 = (unsigned char*)state;
 
         KeccakP_DeclareVars
-            copyFromState_AVX512(state);
+            copyFromState_xkpc_AVX512(state);
             int leftByte = 200 - ckp.ignoreByteInState;
         if (leftByte) {
             int copySize = leftByte < size ? leftByte : size;
@@ -260,8 +260,8 @@ struct ScoreFunction_AVX512
         }
         while (size) {
             if (!leftByte) {
-                rounds12_AVX512;
-                    copyToState_AVX512(buffer);
+                rounds12_xkpc_AVX512;
+                    copyToState_xkpc_AVX512(buffer);
                     leftByte = 200;
             }
             int copySize = leftByte < size ? leftByte : size;
