@@ -79,7 +79,10 @@ struct ScoreTester
 
         static int test_idx = 0;
         // 65k
-        unsigned int reference_list[] = { 77, 97, 77, 99, 81, 91 };
+        //unsigned int reference_list[] = { 77, 97, 77, 99, 81, 91 };
+        // 49152
+        unsigned int reference_list[] = { 83, 98, 87, 94, 89, 90 };
+        // 
         // 36k
         //unsigned int reference_list[] = { 87, 99, 80, 78, 90, 89 };
 
@@ -132,11 +135,11 @@ void runCommonTests(ScoreTester& test_score)
     EXPECT_TRUE(test_score(295, m256i(918321060708494153ULL, 12704296284773187804ULL, 9739953033104705181ULL, 17519212784278682373ULL).m256i_u8, m256i(491077786630729166ULL, 7861022226827992570ULL, 16352138098691722774ULL, 3624360050214296073ULL).m256i_u8));*/
 }
 
-
+static constexpr unsigned long long NEURON_TEST_NUMBER = NUMBER_OF_INPUT_NEURONS * 3 / 2;
 TEST(TestQubicScoreFunction, CurrentLengthNeuronsDurationSettings) {
     ScoreTester<
         DATA_LENGTH,
-        NUMBER_OF_INPUT_NEURONS * 2, NUMBER_OF_OUTPUT_NEURONS * 2,
+        NEURON_TEST_NUMBER, NEURON_TEST_NUMBER,
         MAX_INPUT_DURATION, MAX_OUTPUT_DURATION,
         1
     > test_score;
