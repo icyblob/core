@@ -4110,6 +4110,7 @@ static void tickProcessor(void*)
                                 }
                             }
 #ifndef NDEBUG
+                            if (countvote)
                             {
                                 CHAR16 dbgmsg[128];
                                 setText(dbgmsg, L"Sent ");
