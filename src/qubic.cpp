@@ -4078,6 +4078,7 @@ static void tickProcessor(void*)
 
                         if (system.tick > system.latestCreatedTick || system.tick == system.initialTick)
                         {
+                            int countvote = 0;
                             if (mainAuxStatus & 1)
                             {
                                 BroadcastTick broadcastTick;
@@ -4108,6 +4109,15 @@ static void tickProcessor(void*)
                                     // - all votes are treated equally (own votes and their votes)
                                 }
                             }
+#ifndef NDEBUG
+                            {
+                                CHAR16 dbgmsg[128];
+                                setText(dbgmsg, L"Sent ");
+                                appendNumber(dbgmsg, countvote, false);
+                                appendText(dbgmsg, L" votes.");
+                                addDebugMessage(dbgmsg);
+                            }
+#endif
 
                             if (system.tick != system.initialTick)
                             {
