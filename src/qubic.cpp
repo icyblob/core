@@ -3132,13 +3132,20 @@ static void endEpoch()
     {
         unsigned long long vote_count = voteCounter.getVoteCount(i);
         unsigned long long final_score = vote_count * revenueScore[i];
-        if ((final_score / vote_count) != revenueScore[i]) // detect overflow
+        if (vote_count != 0)
         {
-            revenueScore[i] = 0xFFFFFFFFFFFFFFFFULL; // maximum score
+            if ((final_score / vote_count) != revenueScore[i]) // detect overflow
+            {
+                revenueScore[i] = 0xFFFFFFFFFFFFFFFFULL; // maximum score
+            }
+            else
+            {
+                revenueScore[i] = final_score;
+            }            
         }
-        else
+        else 
         {
-            revenueScore[i] = final_score;
+            revenueScore[i] = 0;
         }
     }
     addDebugMessage(L"Finished vote-based scoring, start sorting");
