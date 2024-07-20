@@ -3104,7 +3104,7 @@ static void endEpoch()
     system.initialDay = etalonTick.day;
     system.initialMonth = etalonTick.month;
     system.initialYear = etalonTick.year;
-
+    addDebugMessage(L"Starting calculating reward");
     long long arbitratorRevenue = ISSUANCE_RATE;
 
     unsigned long long revenueScore[NUMBER_OF_COMPUTORS];
@@ -3127,6 +3127,7 @@ static void endEpoch()
         }
         ts.tickData.releaseLock();
     }
+    addDebugMessage(L"Finished tx-based scoring");
     for (unsigned int i = 0; i < NUMBER_OF_COMPUTORS; i++)
     {
         unsigned long long vote_count = voteCounter.getVoteCount(i);
@@ -3140,6 +3141,7 @@ static void endEpoch()
             revenueScore[i] = final_score;
         }
     }
+    addDebugMessage(L"Finished vote-based scoring, start sorting");
     unsigned long long sortedRevenueScore[QUORUM + 1];
     bs->SetMem(sortedRevenueScore, sizeof(sortedRevenueScore), 0);
     for (unsigned short computorIndex = 0; computorIndex < NUMBER_OF_COMPUTORS; computorIndex++)
@@ -3158,6 +3160,7 @@ static void endEpoch()
     {
         sortedRevenueScore[QUORUM - 1] = 1;
     }
+    addDebugMessage(L"Finished sorting, start distributing");
     for (unsigned int computorIndex = 0; computorIndex < NUMBER_OF_COMPUTORS; computorIndex++)
     {
         const long long revenue = (revenueScore[computorIndex] >= sortedRevenueScore[QUORUM - 1]) ? (ISSUANCE_RATE / NUMBER_OF_COMPUTORS) : (((ISSUANCE_RATE / NUMBER_OF_COMPUTORS) * ((unsigned long long)revenueScore[computorIndex])) / sortedRevenueScore[QUORUM - 1]);
@@ -3169,11 +3172,13 @@ static void endEpoch()
         }
         arbitratorRevenue -= revenue;
     }
+    addDebugMessage(L"Finished distributing");
 
     increaseEnergy((unsigned char*)&arbitratorPublicKey, arbitratorRevenue);
     const QuTransfer quTransfer = { _mm256_setzero_si256() , arbitratorPublicKey , arbitratorRevenue };
     logQuTransfer(quTransfer);
 
+    addDebugMessage(L"Recomputing spectrum");
     {
         ACQUIRE(spectrumLock);
 
@@ -3231,6 +3236,7 @@ static void endEpoch()
     }
 
     assetsEndEpoch(reorgBuffer);
+    addDebugMessage(L"Finished recomputing spectrum");
 
     system.epoch++;
     system.initialTick = system.tick;
