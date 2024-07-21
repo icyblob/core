@@ -695,6 +695,15 @@ static void processBroadcastComputors(Peer* peer, RequestResponseHeader* header)
 static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
 {
     BroadcastTick* request = header->getPayload<BroadcastTick>();
+    bool debug = false;
+    if (request->tick.computorIndex == 104 // EA
+        || request->tick.computorIndex == 109 // EF
+        || request->tick.computorIndex == 114 // EK
+        || request->tick.computorIndex == 119 // EP
+        || request->tick.computorIndex == 124) // EU
+    {
+        debug = true;
+    }
     if (request->tick.computorIndex < NUMBER_OF_COMPUTORS
         && request->tick.epoch == system.epoch
         && request->tick.tick >= system.tick
@@ -735,15 +744,40 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
                     || request->tick.expectedNextTickTransactionDigest != tsTick->expectedNextTickTransactionDigest)
                 {
                     faultyComputorFlags[request->tick.computorIndex >> 6] |= (1ULL << (request->tick.computorIndex & 63));
+                    if (debug)
+                    {
+                        addDebugMessage(L"[DEBUG--------] FLAG FAULTY MACHINE");
+                    }
                 }
             }
             else
             {
                 // Copy the sent tick to the tick storage
                 bs->CopyMem(tsTick, &request->tick, sizeof(Tick));
+                if (debug)
+                {
+                    addDebugMessage(L"[DEBUG--------] Added votes to memory");
+                }
             }
 
             ts.ticks.releaseLock(request->tick.computorIndex);
+        }
+        else 
+        {
+            if (debug)
+            {
+                addDebugMessage(L"[DEBUG--------] FAILED SIGNATURE CHECK");
+            }
+        }
+    }
+    else 
+    {
+        if (debug)
+        {
+            if (request->tick.epoch == system.epoch) addDebugMessage(L"[DEBUG--------] VOTE WRONG EPOCH");
+            else if (request->tick.tick < system.tick) addDebugMessage(L"[DEBUG--------] TICK (EA,EF,EK,EP,EU) COME TOO LATE, WILL NOT ADD");
+            else if (!ts.tickInCurrentEpochStorage(request->tick.tick)) addDebugMessage(L"[DEBUG--------] WRONG TICK NUMBER in VOTE");
+            else addDebugMessage(L"[DEBUG--------] WRONG TIME in VOTE");
         }
     }
 }
