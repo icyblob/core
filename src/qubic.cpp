@@ -783,39 +783,39 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
                 addDebugMessage(L"[DEBUG--------] WRONG TIME in VOTE");
                 if (!(request->tick.month >= 1 && request->tick.month <= 12))
                 {
-                    setText(L"Wrong month: ", dvote);
+                    setText(dvote, L"Wrong month: ");
                     appendNumber(dvote, request->tick.month, false);
                     addDebugMessage(dvote);
                 }
                 if (!(request->tick.day >= 1 && request->tick.day <= ((request->tick.month == 1 || request->tick.month == 3 || request->tick.month == 5 || request->tick.month == 7 || request->tick.month == 8 || request->tick.month == 10 || request->tick.month == 12) ? 31 : ((request->tick.month == 4 || request->tick.month == 6 || request->tick.month == 9 || request->tick.month == 11) ? 30 : ((request->tick.year & 3) ? 28 : 29)))))
                 {
-                    setText(L"Wrong day of month: ", dvote);
+                    setText(dvote, L"Wrong day of month: ");
                     appendNumber(dvote, request->tick.day, false);
-                    appendText(L" - Month: ", dvote);
+                    appendText(dvote, L" - Month: ");
                     appendNumber(dvote, request->tick.month, false);
                     addDebugMessage(dvote);
                 }
                 if (!(request->tick.hour <= 23))
                 {
-                    setText(L"Wrong hour: ", dvote);
+                    setText(dvote, L"Wrong hour: ");
                     appendNumber(dvote, request->tick.hour, false);
                     addDebugMessage(dvote);
                 }
                 if (!(request->tick.minute <= 59))
                 {
-                    setText(L"Wrong minute: ", dvote);
+                    setText(dvote, L"Wrong minute: ");
                     appendNumber(dvote, request->tick.minute, false);
                     addDebugMessage(dvote);
                 }
                 if (!(request->tick.second <= 59))
                 {
-                    setText(L"Wrong second: ", dvote);
+                    setText(dvote, L"Wrong second: ");
                     appendNumber(dvote, request->tick.second, false);
                     addDebugMessage(dvote);
                 }
                 if (!(request->tick.millisecond <= 999))
                 {
-                    setText(L"Wrong millisecond: ", dvote);
+                    setText(dvote, L"Wrong millisecond: ");
                     appendNumber(dvote, request->tick.millisecond, false);
                     addDebugMessage(dvote);
                 }
