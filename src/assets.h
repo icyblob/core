@@ -248,10 +248,29 @@ iteration:
     }
 }
 
+/*
+const unsigned long long assetDigestsSizeInBytes = (ASSETS_CAPACITY * 2 - 1) * 32ULL;
+EFI_STATUS status;
+    if ((status = bs->AllocatePool(EfiRuntimeServicesData, ASSETS_CAPACITY * sizeof(Asset), (void**)&assets))
+        || (status = bs->AllocatePool(EfiRuntimeServicesData, assetDigestsSizeInBytes, (void**)&assetDigests))
+        || (status = bs->AllocatePool(EfiRuntimeServicesData, ASSETS_CAPACITY / 8, (void**)&assetChangeFlags)))
+*/
+#define checkMalformedEtalon0(msg) \
+{ \
+    if (etalonTick.epoch != 118) \
+    { \
+        while (1) \
+        { \
+            addDebugMessage(msg); \
+            addDebugMessage(L"+++++++++ CRITICAL: MALFORMED EPOCH DATA");     \
+        } \
+    } \
+}
 // Should only be called from tick processor to avoid concurrent asset state changes, which may cause race conditions
 static void getUniverseDigest(m256i& digest)
 {
     unsigned int digestIndex;
+    checkMalformedEtalon0(L"Uni - 0");
     for (digestIndex = 0; digestIndex < ASSETS_CAPACITY; digestIndex++)
     {
         if (assetChangeFlags[digestIndex >> 6] & (1ULL << (digestIndex & 63)))
@@ -261,6 +280,7 @@ static void getUniverseDigest(m256i& digest)
     }
     unsigned int previousLevelBeginning = 0;
     unsigned int numberOfLeafs = ASSETS_CAPACITY;
+    checkMalformedEtalon0(L"Uni - 1");
     while (numberOfLeafs > 1)
     {
         for (unsigned int i = 0; i < numberOfLeafs; i += 2)
@@ -276,11 +296,11 @@ static void getUniverseDigest(m256i& digest)
         previousLevelBeginning += numberOfLeafs;
         numberOfLeafs >>= 1;
     }
+    checkMalformedEtalon0(L"Uni - 2");
     assetChangeFlags[0] = 0;
 
     digest = assetDigests[(ASSETS_CAPACITY * 2 - 1) - 1];
 }
-
 
 static void processRequestIssuedAssets(Peer* peer, RequestResponseHeader* header)
 {
