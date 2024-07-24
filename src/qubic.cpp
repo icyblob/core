@@ -2665,6 +2665,18 @@ static void processTickTransaction(const Transaction* transaction, const m256i& 
     } \
 }
 
+#define checkMalformedEtalonMain(msg) \
+{ \
+    if (etalonTick.epoch != 118) \
+    { \
+        while (1) \
+        { \
+            logToConsole(msg); \
+            logToConsole(L"+++++++++ CRITICAL: MALFORMED EPOCH DATA");     \
+        } \
+    } \
+}
+
 static void processTick(unsigned long long processorNumber)
 {
     checkMalformedEtalon(L"Begin process Tick - 0");
@@ -5995,7 +6007,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
             logToConsole(L"Init complete! Entering main loop ...");
             while (!shutDownNode)
             {
-                checkMalformedEtalon(L"Main - Loop - 0");
+                checkMalformedEtalonMain(L"Main - Loop - 0");
                 if (criticalSituation == 1)
                 {
                     logToConsole(L"CRITICAL SITUATION #1!!!");
@@ -6040,7 +6052,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                         logStatusToConsole(L"EFI_MP_SERVICES_PROTOCOL.StartupThisAP() fails", status, __LINE__);
                     }
                 }*/
-                checkMalformedEtalon(L"Main - Loop - 1");
+                checkMalformedEtalonMain(L"Main - Loop - 1");
                 peerTcp4Protocol->Poll(peerTcp4Protocol);
 
                 for (unsigned int i = 0; i < NUMBER_OF_OUTGOING_CONNECTIONS + NUMBER_OF_INCOMING_CONNECTIONS; i++)
@@ -6107,7 +6119,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                     // reconnect if this peer slot has no active connection
                     peerReconnectIfInactive(i, PORT);
                 }
-                checkMalformedEtalon(L"Main - Loop - 2");
+                checkMalformedEtalonMain(L"Main - Loop - 2");
                 if (curTimeTick - systemDataSavingTick >= SYSTEM_DATA_SAVING_PERIOD * frequency / 1000)
                 {
                     systemDataSavingTick = curTimeTick;
@@ -6125,7 +6137,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                         closePeer(&peers[random(NUMBER_OF_OUTGOING_CONNECTIONS + NUMBER_OF_INCOMING_CONNECTIONS)]);
                     }
                 }
-                checkMalformedEtalon(L"Main - Loop - 3");
+                checkMalformedEtalonMain(L"Main - Loop - 3");
                 if (curTimeTick - tickRequestingTick >= TICK_REQUESTING_PERIOD * frequency / 1000
                     && ts.tickInCurrentEpochStorage(system.tick + 1)
                     && !epochTransitionState)
@@ -6203,7 +6215,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                         requestedTickTransactions.requestedTickTransactions.tick = 0;
                     }
                 }
-                checkMalformedEtalon(L"Main - Loop - 3");
+                checkMalformedEtalonMain(L"Main - Loop - 3");
 
                 // Add messages from response queue to sending buffer
                 const unsigned short responseQueueElementHead = ::responseQueueElementHead;
@@ -6229,7 +6241,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                         responseQueueElementTail++;
                     }
                 }
-                checkMalformedEtalon(L"Main - Loop - 4");
+                checkMalformedEtalonMain(L"Main - Loop - 4");
                 if (systemMustBeSaved)
                 {
                     systemDataSavingTick = curTimeTick; // set last save tick to avoid overwrite in main loop
@@ -6260,7 +6272,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                         closePeer(&peers[i]);
                     }
                 }
-                checkMalformedEtalon(L"Main - Loop - 5");
+                checkMalformedEtalonMain(L"Main - Loop - 5");
                 processKeyPresses();
 #if TICK_STORAGE_AUTOSAVE_MODE
                 if ((TICK_STORAGE_AUTOSAVE_MODE == 1 && !(mainAuxStatus & 1)) // autosave in aux mode
@@ -6283,7 +6295,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                     logToConsole(L"Complete saving all node states");
                 }
 #endif
-                checkMalformedEtalon(L"Main - Loop - 6");
+                checkMalformedEtalonMain(L"Main - Loop - 6");
                 if (curTimeTick - loggingTick >= frequency)
                 {
                     loggingTick = curTimeTick;
@@ -6345,7 +6357,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                     mainLoopNumerator += __rdtsc() - curTimeTick;
                     mainLoopDenominator++;
                 }
-                checkMalformedEtalon(L"Main - Loop - 7");
+                checkMalformedEtalonMain(L"Main - Loop - 7");
                 // output if misalignment happened
                 if (tickTotalNumberOfComputors - tickNumberOfComputors > QUORUM)
                 {
@@ -6366,7 +6378,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                 {
                     misalignedState = 0;
                 }
-                checkMalformedEtalon(L"Main - Loop - 8");
+                checkMalformedEtalonMain(L"Main - Loop - 8");
 
 #if !defined(NDEBUG)
                 printDebugMessages();
