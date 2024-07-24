@@ -2670,10 +2670,15 @@ static void processTick(unsigned long long processorNumber)
     checkMalformedEtalon(L"Begin process Tick - 0");
     if (system.tick > system.initialTick)
     {
+        checkMalformedEtalon(L"Begin process Tick - 2");
         etalonTick.prevResourceTestingDigest = resourceTestingDigest;
+        checkMalformedEtalon(L"Begin process Tick - 3");
         etalonTick.prevSpectrumDigest = spectrumDigests[(SPECTRUM_CAPACITY * 2 - 1) - 1];
+        checkMalformedEtalon(L"Begin process Tick - 4");
         getUniverseDigest(etalonTick.prevUniverseDigest);
+        checkMalformedEtalon(L"Begin process Tick - 5");
         getComputerDigest(etalonTick.prevComputerDigest);
+        checkMalformedEtalon(L"Begin process Tick - 6");
     }
     else if (system.tick == system.initialTick) // the first tick of an epoch
     {
