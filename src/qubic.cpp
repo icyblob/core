@@ -774,7 +774,15 @@ static void processBroadcastTick(Peer* peer, RequestResponseHeader* header)
     {
         if (debug)
         {
-            if (request->tick.epoch == system.epoch) addDebugMessage(L"[DEBUG--------] VOTE WRONG EPOCH");
+            if (!(request->tick.epoch == system.epoch))
+                {
+                    CHAR16 dvote[128];
+                    setText(dvote, L"[DEBUG--------] VOTE WRONG EPOCH. Has: ");
+                    appendNumber(dvote, request->tick.epoch, false);
+                    appendText(dvote, L" | Want: ");
+                    appendNumber(dvote, system.epoch, false);
+                    addDebugMessage(dvote);
+                }
             else if (request->tick.tick < system.tick) addDebugMessage(L"[DEBUG--------] TICK (EA,EF,EK,EP,EU) COME TOO LATE, WILL NOT ADD");
             else if (!ts.tickInCurrentEpochStorage(request->tick.tick)) addDebugMessage(L"[DEBUG--------] WRONG TICK NUMBER in VOTE");
             else
