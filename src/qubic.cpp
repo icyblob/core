@@ -4169,7 +4169,8 @@ static void tickProcessor(void*)
                                 bs->CopyMem(&broadcastTick.tick, &etalonTick, sizeof(Tick));
                                 for (unsigned int i = 0; i < numberOfOwnComputorIndices; i++)
                                 {
-                                    broadcastTick.tick.computorIndex = ownComputorIndices[i] ^ BroadcastTick::type;
+                                    unsigned short computorIndex = ownComputorIndices[i] ^ BroadcastTick::type;
+                                    broadcastTick.tick.computorIndex = computorIndex;
                                     m256i saltedData[2];
                                     saltedData[0] = computorPublicKeys[ownComputorIndicesMapping[i]];
                                     saltedData[1].m256i_u64[0] = resourceTestingDigest;
