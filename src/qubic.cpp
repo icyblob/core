@@ -1414,8 +1414,8 @@ static void checkinTime(unsigned long long processorNumber)
 
 static void requestProcessor(void* ProcedureArgument)
 {
-    enableAVX();
     while (1) _mm_pause();
+    enableAVX();
 
     unsigned long long processorNumber;
     mpServicesProtocol->WhoAmI(mpServicesProtocol, &processorNumber);
@@ -5937,7 +5937,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                         logStatusToConsole(L"EFI_BOOT_SERVICES.CreateEvent() fails", status, __LINE__);
                     }
                     // bs->CreateEvent(EVT_NOTIFY_SIGNAL, TPL_CALLBACK, shutdownCallback, NULL, &processors[numberOfProcessors].event);
-                    mpServicesProtocol->StartupThisAP(mpServicesProtocol, Processor::runFunction, i, NULL, 0, &processors[numberOfProcessors], NULL);
+                    mpServicesProtocol->StartupThisAP(mpServicesProtocol, Processor::runFunction, i, processors[numberOfProcessors].event, 0, &processors[numberOfProcessors], NULL);
 
                     if (!solutionProcessorFlags[i % NUMBER_OF_SOLUTION_PROCESSORS]
                         && !solutionProcessorFlags[i])
