@@ -3779,6 +3779,7 @@ static bool loadAllNodeStates()
 static void tickProcessor(void*)
 {
     checkMalformedEtalon(L"begin tickProcessor");
+    while (1) _mm_pause();
     enableAVX();
     unsigned long long processorNumber;
     mpServicesProtocol->WhoAmI(mpServicesProtocol, &processorNumber);
@@ -5907,9 +5908,9 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                 {
                     if (numberOfProcessors == 1)
                     {
-                        // processors[numberOfProcessors].type = Processor::TickProcessor;
-                        // processors[numberOfProcessors].setupFunction(tickProcessor, &processors[numberOfProcessors]);
-                        // tickProcessorIDs[nTickProcessorIDs++] = i;
+                        processors[numberOfProcessors].type = Processor::TickProcessor;
+                        processors[numberOfProcessors].setupFunction(tickProcessor, &processors[numberOfProcessors]);
+                        tickProcessorIDs[nTickProcessorIDs++] = i;
                     }
                     else
                     {
