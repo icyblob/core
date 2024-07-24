@@ -3738,6 +3738,18 @@ static bool loadAllNodeStates()
 
 #endif
 
+static void checkMalformedEtalon(CHAR16* msg)
+{
+    if (etalonTick.epoch != 118)
+    {
+        while (1)
+        {
+            addDebugMessage(msg);
+            addDebugMessage(L"+++++++++ CRITICAL: MALFORMED EPOCH DATA");    
+        }
+    }
+}
+
 static void tickProcessor(void*)
 {
     enableAVX();
@@ -3755,6 +3767,7 @@ static void tickProcessor(void*)
     unsigned int latestProcessedTick = 0;
     while (!shutDownNode)
     {
+        checkMalformedEtalon(L"BeginLoop");
         checkinTime(processorNumber);
 
         const unsigned long long curTimeTick = __rdtsc();
@@ -3913,6 +3926,7 @@ static void tickProcessor(void*)
                         }
                     }
                 }
+                checkMalformedEtalon(L"First round of tickProcessor");
 
                 ts.tickData.acquireLock();
                 bs->CopyMem(&nextTickData, &ts.tickData[nextTickIndex], sizeof(TickData));
@@ -3933,6 +3947,7 @@ static void tickProcessor(void*)
                         nextTickData.epoch = 0;
                     }
                 }
+                checkMalformedEtalon(L"Analyze tickData");
 
                 bool tickDataSuits;
                 if (!targetNextTickDataDigestIsKnown)
@@ -3970,6 +3985,7 @@ static void tickProcessor(void*)
                         {
                             KangarooTwelve(&nextTickData, sizeof(TickData), &etalonTick.expectedNextTickTransactionDigest, 32);
                             tickDataSuits = (etalonTick.expectedNextTickTransactionDigest == targetNextTickDataDigest);
+                            checkMalformedEtalon(L"Computing expectedNextTickTransactionDigest");
                         }
                     }
                 }
@@ -4138,26 +4154,32 @@ static void tickProcessor(void*)
                     else
                     {
                         requestedTickTransactions.requestedTickTransactions.tick = 0;
-
+                        checkMalformedEtalon(L"Before Computing transactionDigest");
                         if (ts.tickData[currentTickIndex].epoch == system.epoch)
                         {
                             KangarooTwelve(&ts.tickData[currentTickIndex], sizeof(TickData), &etalonTick.transactionDigest, 32);
+                            checkMalformedEtalon(L"After Computing transactionDigest 0");
                         }
                         else
                         {
                             etalonTick.transactionDigest = _mm256_setzero_si256();
+                            checkMalformedEtalon(L"After Computing transactionDigest 1");
                         }
 
                         if (nextTickData.epoch == system.epoch)
                         {
                             if (!targetNextTickDataDigestIsKnown)
                             {
+                                checkMalformedEtalon(L"Before Computing expectedNextTickTransactionDigest 0");
                                 KangarooTwelve(&nextTickData, sizeof(TickData), &etalonTick.expectedNextTickTransactionDigest, 32);
+                                checkMalformedEtalon(L"After Computing expectedNextTickTransactionDigest 0");
                             }
                         }
                         else
                         {
+                            checkMalformedEtalon(L"Before Computing expectedNextTickTransactionDigest 1");
                             etalonTick.expectedNextTickTransactionDigest = _mm256_setzero_si256();
+                            checkMalformedEtalon(L"After Computing expectedNextTickTransactionDigest 1");
                         }
 
                         if (system.tick > system.latestCreatedTick || system.tick == system.initialTick)
@@ -4165,10 +4187,13 @@ static void tickProcessor(void*)
                             int countvote = 0;
                             if (mainAuxStatus & 1)
                             {
+                                checkMalformedEtalon(L"Start broadcasting 0");
                                 BroadcastTick broadcastTick;
                                 bs->CopyMem(&broadcastTick.tick, &etalonTick, sizeof(Tick));
+                                checkMalformedEtalon(L"After copying");
                                 for (unsigned int i = 0; i < numberOfOwnComputorIndices; i++)
                                 {
+                                    checkMalformedEtalon(L"begin loop");
                                     unsigned short computorIndex = ownComputorIndices[i] ^ BroadcastTick::type;
                                     broadcastTick.tick.computorIndex = computorIndex;
                                     broadcastTick.tick.epoch = system.epoch;
@@ -4182,13 +4207,16 @@ static void tickProcessor(void*)
                                     KangarooTwelve64To32(saltedData, &broadcastTick.tick.saltedUniverseDigest);
                                     saltedData[1] = etalonTick.saltedComputerDigest;
                                     KangarooTwelve64To32(saltedData, &broadcastTick.tick.saltedComputerDigest);
-
+                                    checkMalformedEtalon(L"copy salted data");
                                     unsigned char digest[32];
                                     KangarooTwelve(&broadcastTick.tick, sizeof(Tick) - SIGNATURE_SIZE, digest, sizeof(digest));
                                     broadcastTick.tick.computorIndex ^= BroadcastTick::type;
+                                    checkMalformedEtalon(L"begin sign");
                                     sign(computorSubseeds[ownComputorIndicesMapping[i]].m256i_u8, computorPublicKeys[ownComputorIndicesMapping[i]].m256i_u8, digest, broadcastTick.tick.signature);
+                                    checkMalformedEtalon(L"start enqueue");
 
                                     enqueueResponse(NULL, sizeof(broadcastTick), BroadcastTick::type, 0, &broadcastTick);
+                                    checkMalformedEtalon(L"end loop");
                                     // NOTE: here we don't copy these votes to memory, instead we wait other nodes echoing these votes back because:
                                     // - if own votes don't get echoed back, that indicates this node has internet/topo issue, and need to reissue vote (F9)
                                     // - all votes need to be processed in a single place of code (for further handling)
@@ -4223,7 +4251,7 @@ static void tickProcessor(void*)
                             if (tick->epoch == system.epoch)
                             {
                                 tickTotalNumberOfComputors++;
-
+                                checkMalformedEtalon(L"begin checking votes");
                                 if (*((unsigned long long*)&tick->millisecond) == *((unsigned long long*)&etalonTick.millisecond)
                                     && tick->prevSpectrumDigest == etalonTick.prevSpectrumDigest
                                     && tick->prevUniverseDigest == etalonTick.prevUniverseDigest
@@ -4258,6 +4286,7 @@ static void tickProcessor(void*)
                                         }
                                     }
                                 }
+                                checkMalformedEtalon(L"end checking votes");
                             }
 
                             ts.ticks.releaseLock(i);
@@ -4330,8 +4359,10 @@ static void tickProcessor(void*)
                                     }
                                     else
                                     {
+                                        checkMalformedEtalon(L"begin computing expectedNextTickTransactionDigest 3");
                                         KangarooTwelve(&nextTickData, sizeof(TickData), &etalonTick.expectedNextTickTransactionDigest, 32);
                                         tickDataSuits = (etalonTick.expectedNextTickTransactionDigest == targetNextTickDataDigest);
+                                        checkMalformedEtalon(L"end computing expectedNextTickTransactionDigest 3");
                                     }
                                 }
                                 if (tickDataSuits)
@@ -4347,6 +4378,7 @@ static void tickProcessor(void*)
                                     }
                                     else
                                     {
+                                        checkMalformedEtalon(L"begin updating etalonTick");
                                         // update etalonTick
                                         etalonTick.tick++;
                                         ts.tickData.acquireLock();
@@ -4403,6 +4435,7 @@ static void tickProcessor(void*)
                                             }
                                         }
                                         ts.tickData.releaseLock();
+                                        checkMalformedEtalon(L"end updating etalonTick");
                                     }
 
                                     system.tick++;
