@@ -3752,6 +3752,7 @@ static bool loadAllNodeStates()
 
 static void tickProcessor(void*)
 {
+    checkMalformedEtalon(L"begin tickProcessor");
     enableAVX();
     unsigned long long processorNumber;
     mpServicesProtocol->WhoAmI(mpServicesProtocol, &processorNumber);
@@ -3763,6 +3764,7 @@ static void tickProcessor(void*)
         initializeFirstTick();
     }
 #endif
+    checkMalformedEtalon(L"after enable avx");
 
     unsigned int latestProcessedTick = 0;
     while (!shutDownNode)
@@ -4537,6 +4539,7 @@ static void tickProcessor(void*)
                                         tickTicks[i] = tickTicks[i + 1];
                                     }
                                     tickTicks[sizeof(tickTicks) / sizeof(tickTicks[0]) - 1] = __rdtsc();
+                                    checkMalformedEtalon(L"end of big loop");
                                 }
                             }
                         }
