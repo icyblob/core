@@ -2675,7 +2675,7 @@ static void processTick(unsigned long long processorNumber)
         checkMalformedEtalon(L"Begin process Tick - 3");
         etalonTick.prevSpectrumDigest = spectrumDigests[(SPECTRUM_CAPACITY * 2 - 1) - 1];
         checkMalformedEtalon(L"Begin process Tick - 4");
-        getUniverseDigest(etalonTick.prevUniverseDigest);
+        getUniverseDigest(etalonTick.prevUniverseDigest, etalonTick);
         checkMalformedEtalon(L"Begin process Tick - 5");
         getComputerDigest(etalonTick.prevComputerDigest);
         checkMalformedEtalon(L"Begin process Tick - 6");
@@ -2695,7 +2695,7 @@ static void processTick(unsigned long long processorNumber)
         {
             etalonTick.prevResourceTestingDigest = resourceTestingDigest;
             etalonTick.prevSpectrumDigest = spectrumDigests[(SPECTRUM_CAPACITY * 2 - 1) - 1];
-            getUniverseDigest(etalonTick.prevUniverseDigest);
+            getUniverseDigest(etalonTick.prevUniverseDigest, etalonTick);
             getComputerDigest(etalonTick.prevComputerDigest);
         }
 #endif
@@ -2860,7 +2860,7 @@ static void processTick(unsigned long long processorNumber)
 
     RELEASE(spectrumLock);
 
-    getUniverseDigest(etalonTick.saltedUniverseDigest);
+    getUniverseDigest(etalonTick.saltedUniverseDigest, etalonTick);
     checkMalformedEtalon(L"Process Tick - 6");
     getComputerDigest(etalonTick.saltedComputerDigest);
     checkMalformedEtalon(L"Process Tick - 7");
@@ -3151,7 +3151,7 @@ static void endEpoch()
     // would be unable to compute this value(!?)
     etalonTick.prevResourceTestingDigest = resourceTestingDigest; 
     etalonTick.prevSpectrumDigest = spectrumDigests[(SPECTRUM_CAPACITY * 2 - 1) - 1];
-    getUniverseDigest(etalonTick.prevUniverseDigest);
+    getUniverseDigest(etalonTick.prevUniverseDigest, etalonTick);
     getComputerDigest(etalonTick.prevComputerDigest);
 
     for (unsigned int contractIndex = 1; contractIndex < contractCount; contractIndex++)
@@ -4545,7 +4545,7 @@ static void tickProcessor(void*)
                                         etalonTick.epoch++;
                                         etalonTick.tick++;
                                         etalonTick.saltedSpectrumDigest = spectrumDigests[(SPECTRUM_CAPACITY * 2 - 1) - 1];
-                                        getUniverseDigest(etalonTick.saltedUniverseDigest);
+                                        getUniverseDigest(etalonTick.saltedUniverseDigest, etalonTick);
                                         getComputerDigest(etalonTick.saltedComputerDigest);
 
                                         epochTransitionState = 0;
@@ -4946,7 +4946,7 @@ static bool initialize()
             m256i universeDigest;
             {
                 setText(message, L"Universe digest = ");
-                getUniverseDigest(universeDigest);
+                getUniverseDigest(universeDigest, etalonTick);
                 CHAR16 digestChars[60 + 1];
                 getIdentity(universeDigest.m256i_u8, digestChars, true);
                 appendText(message, digestChars);
