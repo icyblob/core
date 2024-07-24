@@ -3738,16 +3738,16 @@ static bool loadAllNodeStates()
 
 #endif
 
-static void checkMalformedEtalon(CHAR16* msg)
-{
-    if (etalonTick.epoch != 118)
-    {
-        while (1)
-        {
-            addDebugMessage(msg);
-            addDebugMessage(L"+++++++++ CRITICAL: MALFORMED EPOCH DATA");    
-        }
-    }
+#define checkMalformedEtalon(msg) \
+{ \
+    if (etalonTick.epoch != 118) \
+    { \
+        while (1) \
+        { \
+            addDebugMessage(msg); \
+            addDebugMessage(L"+++++++++ CRITICAL: MALFORMED EPOCH DATA");     \
+        } \
+    } \
 }
 
 static void tickProcessor(void*)
