@@ -2653,8 +2653,21 @@ static void processTickTransaction(const Transaction* transaction, const m256i& 
     }
 }
 
+#define checkMalformedEtalon(msg) \
+{ \
+    if (etalonTick.epoch != 118) \
+    { \
+        while (1) \
+        { \
+            addDebugMessage(msg); \
+            addDebugMessage(L"+++++++++ CRITICAL: MALFORMED EPOCH DATA");     \
+        } \
+    } \
+}
+
 static void processTick(unsigned long long processorNumber)
 {
+    checkMalformedEtalon(L"Begin process Tick - 0");
     if (system.tick > system.initialTick)
     {
         etalonTick.prevResourceTestingDigest = resourceTestingDigest;
@@ -2686,6 +2699,7 @@ static void processTick(unsigned long long processorNumber)
     {
         // it should never go here
     }
+    checkMalformedEtalon(L"Begin process Tick - 1");
 
     if (system.tick == system.initialTick)
     {
@@ -2716,6 +2730,7 @@ static void processTick(unsigned long long processorNumber)
     bs->CopyMem(&nextTickData, &ts.tickData[tickIndex], sizeof(TickData));
     ts.tickData.releaseLock();
     unsigned long long solutionProcessStartTick = __rdtsc(); // for tracking the time processing solutions
+    checkMalformedEtalon(L"Process Tick - 0");
     if (nextTickData.epoch == system.epoch)
     {
         auto* tsCurrentTickTransactionOffsets = ts.tickTransactionOffsets.getByTickIndex(tickIndex);
@@ -2760,6 +2775,7 @@ static void processTick(unsigned long long processorNumber)
                 }
             }
         }
+        checkMalformedEtalon(L"Process Tick - 1");
 
         {
             // Process solutions in this tick and store in cache. In parallel, score->tryProcessSolution() is called by
@@ -2772,6 +2788,7 @@ static void processTick(unsigned long long processorNumber)
             score->stopProcessTaskQueue();
         }
         solutionTotalExecutionTicks = __rdtsc() - solutionProcessStartTick; // for tracking the time processing solutions
+        checkMalformedEtalon(L"Process Tick - 2");
 
         // Process all transaction of the tick
         for (unsigned int transactionIndex = 0; transactionIndex < NUMBER_OF_TRANSACTIONS_PER_TICK; transactionIndex++)
@@ -2782,6 +2799,7 @@ static void processTick(unsigned long long processorNumber)
                 {
                     Transaction* transaction = ts.tickTransactions(tsCurrentTickTransactionOffsets[transactionIndex]);
                     processTickTransaction(transaction, nextTickData.transactionDigests[transactionIndex], processorNumber);
+                    checkMalformedEtalon(L"Process Tick - 3");
                 }
                 else
                 {
@@ -2792,6 +2810,7 @@ static void processTick(unsigned long long processorNumber)
                 }
             }
         }
+        checkMalformedEtalon(L"Process Tick - 4");
     }
 
     contractProcessorPhase = END_TICK;
@@ -2831,10 +2850,15 @@ static void processTick(unsigned long long processorNumber)
     spectrumChangeFlags[0] = 0;
 
     etalonTick.saltedSpectrumDigest = spectrumDigests[(SPECTRUM_CAPACITY * 2 - 1) - 1];
+
+    checkMalformedEtalon(L"Process Tick - 5");
+
     RELEASE(spectrumLock);
 
     getUniverseDigest(etalonTick.saltedUniverseDigest);
+    checkMalformedEtalon(L"Process Tick - 6");
     getComputerDigest(etalonTick.saltedComputerDigest);
+    checkMalformedEtalon(L"Process Tick - 7");
 
     for (unsigned int i = 0; i < numberOfOwnComputorIndices; i++)
     {
@@ -2946,6 +2970,7 @@ static void processTick(unsigned long long processorNumber)
             }
         }
     }
+    checkMalformedEtalon(L"Process Tick - 8");
 
     if (mainAuxStatus & 1)
     {
@@ -3008,6 +3033,7 @@ static void processTick(unsigned long long processorNumber)
             }
         }
     }
+    checkMalformedEtalon(L"Process Tick - 9");
 }
 
 static void beginEpoch1of2()
@@ -3742,18 +3768,6 @@ static bool loadAllNodeStates()
 
 #endif
 
-#define checkMalformedEtalon(msg) \
-{ \
-    if (etalonTick.epoch != 118) \
-    { \
-        while (1) \
-        { \
-            addDebugMessage(msg); \
-            addDebugMessage(L"+++++++++ CRITICAL: MALFORMED EPOCH DATA");     \
-        } \
-    } \
-}
-
 static void tickProcessor(void*)
 {
     checkMalformedEtalon(L"begin tickProcessor");
@@ -3782,6 +3796,7 @@ static void tickProcessor(void*)
         if (broadcastedComputors.computors.epoch == system.epoch
             && ts.tickInCurrentEpochStorage(nextTick))
         {
+            checkMalformedEtalon(L"First round of tickProcessor - 0");
             const unsigned int currentTickIndex = ts.tickToIndexCurrentEpoch(system.tick);
             const unsigned int nextTickIndex = ts.tickToIndexCurrentEpoch(nextTick);
 
@@ -3797,8 +3812,9 @@ static void tickProcessor(void*)
                 }
                 ::futureTickTotalNumberOfComputors = futureTickTotalNumberOfComputors;
             }
-
+            
             {
+                checkMalformedEtalon(L"First round of tickProcessor - 1");
                 if (system.tick > latestProcessedTick)
                 {
                     // LOGIC: if it can reach to this point that means we already have all necessary data to process tick `system.tick`
@@ -3812,6 +3828,7 @@ static void tickProcessor(void*)
                     processTick(processorNumber);
                     latestProcessedTick = system.tick;
                 }
+                checkMalformedEtalon(L"First round of tickProcessor - 2");
 
                 if (futureTickTotalNumberOfComputors > NUMBER_OF_COMPUTORS - QUORUM)
                 {
@@ -3846,6 +3863,7 @@ static void tickProcessor(void*)
                             }
                         }
                     }
+                    checkMalformedEtalon(L"First round of tickProcessor - 3");
                     unsigned int mostPopularUniqueNextTickTransactionDigestIndex = 0, totalUniqueNextTickTransactionDigestCounter = uniqueNextTickTransactionDigestCounters[0];
                     for (unsigned int i = 1; i < numberOfUniqueNextTickTransactionDigests; i++)
                     {
@@ -3872,6 +3890,7 @@ static void tickProcessor(void*)
                     }
                 }
 
+                checkMalformedEtalon(L"First round of tickProcessor - 8");
                 if (!targetNextTickDataDigestIsKnown)
                 {
                     const Tick* tsCompTicks = ts.ticks.getByTickIndex(currentTickIndex);
@@ -3932,7 +3951,7 @@ static void tickProcessor(void*)
                         }
                     }
                 }
-                checkMalformedEtalon(L"First round of tickProcessor");
+                checkMalformedEtalon(L"First round of tickProcessor - 9");
 
                 ts.tickData.acquireLock();
                 bs->CopyMem(&nextTickData, &ts.tickData[nextTickIndex], sizeof(TickData));
