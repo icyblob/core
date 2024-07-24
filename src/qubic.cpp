@@ -3650,6 +3650,10 @@ static bool loadAllNodeStates()
         return false;
     }
     copyMem(&etalonTick, &nodeStateBuffer.etalonTick, sizeof(etalonTick));
+    {
+        etalonTick.epoch = EPOCH;
+    }
+
     copyMem((void*)minerPublicKeys, nodeStateBuffer.minerPublicKeys, sizeof(minerPublicKeys));
     copyMem((void*)minerScores, nodeStateBuffer.minerScores, sizeof(minerScores));
     copyMem((void*)competitorPublicKeys, nodeStateBuffer.competitorPublicKeys, sizeof(competitorPublicKeys));
