@@ -1415,6 +1415,7 @@ static void checkinTime(unsigned long long processorNumber)
 static void requestProcessor(void* ProcedureArgument)
 {
     enableAVX();
+    while (1) _mm_pause();
 
     unsigned long long processorNumber;
     mpServicesProtocol->WhoAmI(mpServicesProtocol, &processorNumber);
@@ -3791,7 +3792,6 @@ static bool loadAllNodeStates()
 static void tickProcessor(void*)
 {
     checkMalformedEtalon(L"begin tickProcessor");
-    while (1) _mm_pause();
     enableAVX();
     unsigned long long processorNumber;
     mpServicesProtocol->WhoAmI(mpServicesProtocol, &processorNumber);
