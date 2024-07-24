@@ -5887,7 +5887,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
         {
             solutionProcessorFlags[i] = false;
         }
-        checkMalformedEtalon(L"Main - 0");
+        checkMalformedEtalonMain(L"Main - 0");
         for (unsigned int i = 0; i < numberOfAllProcessors && numberOfProcessors < MAX_NUMBER_OF_PROCESSORS; i++)
         {
             EFI_PROCESSOR_INFORMATION processorInformation;
@@ -5945,14 +5945,14 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                 numberOfProcessors++;
             }
         }
-        checkMalformedEtalon(L"Main - 1");
+        checkMalformedEtalonMain(L"Main - 1");
         if (numberOfProcessors < 3)
         {
             logToConsole(L"At least 4 healthy enabled processors are required! Exiting...");
         }
         else
         {
-            checkMalformedEtalon(L"Main - 2");
+            checkMalformedEtalonMain(L"Main - 2");
             setNumber(message, 1 + numberOfProcessors, TRUE);
             appendText(message, L"/");
             appendNumber(message, numberOfAllProcessors, TRUE);
@@ -5964,7 +5964,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
             logToConsole(message);
 
             setText(message, L"Tick processors: ");
-            checkMalformedEtalon(L"Main - 3");
+            checkMalformedEtalonMain(L"Main - 3");
             for (int i = 0; i < nTickProcessorIDs; i++)
             {
                 appendText(message, L"Processor #");
@@ -5972,7 +5972,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                 if (i != nTickProcessorIDs -1) appendText(message, L" | ");
             }
             logToConsole(message);
-            checkMalformedEtalon(L"Main - 4");
+            checkMalformedEtalonMain(L"Main - 4");
             setText(message, L"Request processors: ");
             for (int i = 0; i < nRequestProcessorIDs; i++)
             {
@@ -5981,7 +5981,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                 if (i != nRequestProcessorIDs - 1) appendText(message, L" | ");
             }
             logToConsole(message);
-            checkMalformedEtalon(L"Main - 5");
+            checkMalformedEtalonMain(L"Main - 5");
             setText(message, L"Solution processors: ");
             for (int i = 0; i < nSolutionProcessorIDs; i++)
             {
@@ -5990,7 +5990,7 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
                 if (i != nSolutionProcessorIDs - 1) appendText(message, L" | ");
             }
             logToConsole(message);
-            checkMalformedEtalon(L"Main - 6");
+            checkMalformedEtalonMain(L"Main - 6");
 
 
             // -----------------------------------------------------
@@ -6002,13 +6002,13 @@ EFI_STATUS efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE* systemTable)
             unsigned long long debugDigestOriginal = 0, debugDigestCurrent = 0;
             unsigned int debugTick = 0;
             KangarooTwelve(contractUserProcedureLocalsSizes, sizeof(contractUserProcedureLocalsSizes), &debugDigestOriginal, sizeof(debugDigestOriginal));
-            checkMalformedEtalon(L"Main - 7");
+            checkMalformedEtalonMain(L"Main - 7");
 
 
             unsigned long long clockTick = 0, systemDataSavingTick = 0, loggingTick = 0, peerRefreshingTick = 0, tickRequestingTick = 0;
             unsigned int tickRequestingIndicator = 0, futureTickRequestingIndicator = 0;
             unsigned int lastSavedTick = system.tick;
-            checkMalformedEtalon(L"Main - 8");
+            checkMalformedEtalonMain(L"Main - 8");
             logToConsole(L"Init complete! Entering main loop ...");
             while (!shutDownNode)
             {
