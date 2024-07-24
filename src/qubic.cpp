@@ -4171,6 +4171,7 @@ static void tickProcessor(void*)
                                 {
                                     unsigned short computorIndex = ownComputorIndices[i] ^ BroadcastTick::type;
                                     broadcastTick.tick.computorIndex = computorIndex;
+                                    broadcastTick.tick.epoch = system.epoch;
                                     m256i saltedData[2];
                                     saltedData[0] = computorPublicKeys[ownComputorIndicesMapping[i]];
                                     saltedData[1].m256i_u64[0] = resourceTestingDigest;
@@ -5522,6 +5523,14 @@ static void processKeyPresses()
             appendNumber(message, etalonTick.millisecond % 10, FALSE);
             appendText(message, L".");
             logToConsole(message);
+
+            setText(message, L"Epoch: ");
+            appendNumber(message, etalonTick.epoch, false);
+            logToConsole(message);
+            if (etalonTick.epoch != system.epoch)
+            {
+                logToConsole(L"+++++++++ CRITICAL: MALFORMED EPOCH DATA");
+            }
 
             CHAR16 digestChars[60 + 1];
 
