@@ -302,19 +302,6 @@ static void getUniverseDigest(m256i& digest, Tick& etalonTick)
     digest = assetDigests[(ASSETS_CAPACITY * 2 - 1) - 1];
 }
 
-prev = 0
-leaf = 16777216
-di = 16777216
-m0 = 0
-m1 = 0
-while leaf > 1:
-    for i in range(0,leaf,2):
-        m0 = prev+i
-        m1 = di
-        di+=1
-    prev += leaf
-    leaf = leaf >> 1
-
 static void processRequestIssuedAssets(Peer* peer, RequestResponseHeader* header)
 {
     RespondIssuedAssets response;
