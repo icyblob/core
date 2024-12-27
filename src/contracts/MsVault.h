@@ -1,3 +1,6 @@
+#pragma once
+#include "qpi.h"
+
 using namespace QPI;
 
 constexpr uint16 MSVAULT_MAX_OWNERS = 32;
@@ -30,6 +33,12 @@ public:
         bit isActive;
         array<uint64, MSVAULT_MAX_OWNERS> releaseAmounts;
         array<id, MSVAULT_MAX_OWNERS> releaseDestinations;
+    };
+
+    struct OwnedVaultMapping
+    {
+        uint16 numberOfVaults;
+        array<uint64, MSVAULT_MAX_COOWNER> vaultIDs;
     };
 
     struct MSVaultLogger
@@ -119,13 +128,11 @@ public:
     {
         uint16 ownerCount;
         uint16 i;
-        uint16 j;
-        uint16 k;
-        sint64 count;
         sint64 slotIndex;
         Vault newVault;
         Vault tempVault;
-        id proposedOwner;
+        id tempOwner;
+        OwnedVaultMapping mapVal;
 
         resetReleaseRequests_input rr_in;
         resetReleaseRequests_output rr_out;
@@ -330,6 +337,7 @@ public:
 protected:
     // Contract states
     array<Vault, MSVAULT_MAX_VAULTS> vaults;
+    HashMap<id, OwnedVaultMapping, MSVAULT_MAX_VAULTS * MSVAULT_MAX_OWNERS> ownersMap;
 
     uint32 numberOfActiveVaults;
     uint64 totalRevenue;
@@ -415,38 +423,21 @@ protected:
             qpi.transfer(qpi.invocator(), qpi.invocationReward());
             return;
         }
-
-        locals.ownerCount = 0;
-        for (locals.i = 0; locals.i < MSVAULT_MAX_OWNERS; locals.i++)
-        {
-            if (input.owners.get(locals.i) != NULL_ID)
-            {
-                locals.ownerCount++;
-            }
-        }
-
+        
         for (locals.i = 0; locals.i < locals.ownerCount; locals.i++)
         {
-            locals.proposedOwner = input.owners.get(locals.i);
-            locals.count = 0;
-            for (locals.j = 0; locals.j < MSVAULT_MAX_VAULTS; locals.j++)
+            locals.tempOwner = input.owners.get(locals.i);
+
+            if (!state.ownersMap.get(locals.tempOwner, locals.mapVal))
             {
-                locals.tempVault = state.vaults.get(locals.j);
-                if (locals.tempVault.isActive)
-                {
-                    for (locals.k = 0; locals.k < locals.tempVault.numberOfOwners; locals.k++)
-                    {
-                        if (locals.tempVault.owners.get(locals.k) == locals.proposedOwner)
-                        {
-                            locals.count++;
-                            if (locals.count >= MSVAULT_MAX_COOWNER)
-                            {
-                                qpi.transfer(qpi.invocator(), qpi.invocationReward());
-                                return;
-                            }
-                        }
-                    }
-                }
+                // brand new entry => 0 vaults
+                locals.mapVal.numberOfVaults = 0;
+            }
+
+            if (locals.mapVal.numberOfVaults >= MSVAULT_MAX_COOWNER)
+            {
+                qpi.transfer(qpi.invocator(), qpi.invocationReward());
+                return;
             }
         }
 
@@ -466,6 +457,25 @@ protected:
         }
 
         state.vaults.set((uint64)locals.slotIndex, locals.newVault);
+
+        // Add new vaultId to each owner’s HashMap
+        for (locals.i = 0; locals.i < locals.ownerCount; locals.i++)
+        {
+            locals.tempOwner = input.owners.get(locals.i);
+
+            if (!state.ownersMap.get(locals.tempOwner, locals.mapVal))
+            {
+                locals.mapVal.numberOfVaults = 0;
+            }
+            locals.mapVal.vaultIDs.set(locals.mapVal.numberOfVaults, (uint64)locals.slotIndex);
+            locals.mapVal.numberOfVaults++;
+
+            if (state.ownersMap.set(locals.tempOwner, locals.mapVal) == NULL_INDEX)
+            {
+                qpi.transfer(qpi.invocator(), qpi.invocationReward());
+                return;
+            }
+        }
 
         if (qpi.invocationReward() > MSVAULT_REGISTERING_FEE)
         {
