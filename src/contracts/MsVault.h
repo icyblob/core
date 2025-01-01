@@ -126,6 +126,7 @@ public:
         Vault newVault;
         Vault tempVault;
         id proposedOwner;
+        MSVaultLogger logger;
 
         resetReleaseRequests_input rr_in;
         resetReleaseRequests_output rr_out;
@@ -142,6 +143,7 @@ public:
     struct deposit_locals
     {
         Vault vault;
+        MSVaultLogger logger;
         isValidVaultId_input iv_in;
         isValidVaultId_output iv_out;
         isValidVaultId_locals iv_locals;
@@ -377,9 +379,17 @@ protected:
 
     // Procedures and functions
     PUBLIC_PROCEDURE_WITH_LOCALS(registerVault)
+        locals.logger._contractIndex = CONTRACT_INDEX;
+        locals.logger._type = 0;
+        locals.logger.vaultId = -1;
+        locals.logger.ownerID = qpi.invocator();
+        locals.logger.amount = qpi.invocationReward();
+        locals.logger.destination = NULL_ID;
         if (qpi.invocationReward() < MSVAULT_REGISTERING_FEE)
         {
             qpi.transfer(qpi.invocator(), qpi.invocationReward());
+            locals.logger._type = 8;
+            LOG_INFO(locals.logger);
             return;
         }
 
@@ -395,6 +405,8 @@ protected:
         if (locals.ownerCount <= 1)
         {
             qpi.transfer(qpi.invocator(), qpi.invocationReward());
+            locals.logger._type = 9;
+            LOG_INFO(locals.logger);
             return;
         }
 
@@ -412,6 +424,8 @@ protected:
 
         if (locals.slotIndex == -1)
         {
+            locals.logger._type = 10;
+            LOG_INFO(locals.logger);
             qpi.transfer(qpi.invocator(), qpi.invocationReward());
             return;
         }
@@ -432,6 +446,8 @@ protected:
                             locals.count++;
                             if (locals.count >= MSVAULT_MAX_COOWNER)
                             {
+                                locals.logger._type = 11;
+                                LOG_INFO(locals.logger);
                                 qpi.transfer(qpi.invocator(), qpi.invocationReward());
                                 return;
                             }
@@ -465,6 +481,8 @@ protected:
 
         state.numberOfActiveVaults++;
         state.totalRevenue += MSVAULT_REGISTERING_FEE;
+        locals.logger._type = 12;
+        LOG_INFO(locals.logger);
     _
 
     PUBLIC_PROCEDURE_WITH_LOCALS(deposit)
