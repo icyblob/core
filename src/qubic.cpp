@@ -828,6 +828,94 @@ static void processBroadcastTransaction(Peer* peer, RequestResponseHeader* heade
 {
     Transaction* request = header->getPayload<Transaction>();
     const unsigned int transactionSize = request->totalSize();
+    unsigned char digest[32];
+    KangarooTwelve(request, transactionSize - SIGNATURE_SIZE, digest, sizeof(digest));
+
+    bool checkValidityAndSize = (request->checkValidity() && transactionSize == header->size() - sizeof(RequestResponseHeader));
+    bool checkSignature = verify(request->sourcePublicKey.m256i_u8, digest, request->signaturePtr());
+    bool isDejavuZero = header->isDejavuZero();
+    int  cIndex = ::computorIndex(request->sourcePublicKey);
+    bool checkComputorIndex = (cIndex >= 0);
+
+    bool checkComputorPendingTick = false;
+    if (checkComputorIndex) 
+    {
+        unsigned int offset = random(MAX_NUMBER_OF_PENDING_TRANSACTIONS_PER_COMPUTOR);
+        auto* storedTx = reinterpret_cast<Transaction*>(&computorPendingTransactions[cIndex * offset * MAX_TRANSACTION_SIZE]);
+        checkComputorPendingTick =
+            (storedTx->tick < request->tick &&
+                request->tick < system.initialTick + MAX_NUMBER_OF_TICKS_PER_EPOCH);
+    }
+
+    int spectrumIndexVal = ::spectrumIndex(request->sourcePublicKey);
+    bool checkEntityPendingTick = false;
+    if (spectrumIndexVal >= 0) 
+    {
+        auto* storedEntityTx = reinterpret_cast<Transaction*>(&entityPendingTransactions[spectrumIndexVal * MAX_TRANSACTION_SIZE]);
+        checkEntityPendingTick =
+            (storedEntityTx->tick < request->tick &&
+                request->tick < system.initialTick + MAX_NUMBER_OF_TICKS_PER_EPOCH);
+    }
+
+    unsigned int tickIndex = 0;
+    bool checkNextTickData = false;
+    bool checkDigestMatch = false;
+    bool checkReqOffset = false;
+    if (request->tick == system.tick + 1 && ts.tickData[tickIndex].epoch == system.epoch) 
+    {
+        checkNextTickData = true;
+        checkDigestMatch = (digest == ts.tickData[tickIndex].transactionDigests[0]);
+        checkReqOffset = (!ts.tickTransactionOffsets.getByTickIndex(tickIndex)[0]);
+    }
+
+    bool checkSpaceInTxStore =
+        (ts.nextTickTransactionOffset + transactionSize <= ts.tickTransactions.storageSpaceCurrentEpoch);
+
+    m256i maskedDestination = request->destinationPublicKey;
+    maskedDestination.m256i_u64[0] &= ~(MAX_NUMBER_OF_CONTRACTS - 1ULL);
+    unsigned int contractIndex = (unsigned int)request->destinationPublicKey.m256i_u64[0];
+    bool isContractTx = (isZero(maskedDestination) && (contractIndex < contractCount));
+
+    if (isContractTx)
+    {
+        ACQUIRE(icyLock);
+        debugRepeat = 3;
+        setText(messageDebug, L"BBBBBBBBBBBBMessage BROADCAST Received!BBBBBBBBBBBBB");
+
+        appendText(messageDebug, L"1) checkValidity & size: ");
+        appendNumber(messageDebug, checkValidityAndSize ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n2) verify(signature): ");
+        appendNumber(messageDebug, checkSignature ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n3) header->isDejavuZero(): ");
+        appendNumber(messageDebug, isDejavuZero ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n4) computorIndex >= 0: ");
+        appendNumber(messageDebug, checkComputorIndex ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n5) checkComputorPendingTick: ");
+        appendNumber(messageDebug, checkComputorPendingTick ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n6) checkEntityPendingTick: ");
+        appendNumber(messageDebug, checkEntityPendingTick ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n7) nextTickData condition: ");
+        appendNumber(messageDebug, checkNextTickData ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n8) digest match in tickData: ");
+        appendNumber(messageDebug, checkDigestMatch ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n9) no existing tx offset: ");
+        appendNumber(messageDebug, checkReqOffset ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n10) enough space in tx storage: ");
+        appendNumber(messageDebug, checkSpaceInTxStore ? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"\n[End of processBroadcastTransaction debug logs]\n");
+        RELEASE(icyLock);
+    }
+
     if (request->checkValidity() && transactionSize == header->size() - sizeof(RequestResponseHeader))
     {
         unsigned char digest[32];
@@ -1450,10 +1538,6 @@ static void requestProcessor(void* ProcedureArgument)
                 case BROADCAST_TRANSACTION:
                 {
                     processBroadcastTransaction(peer, header);
-                    ACQUIRE(icyLock);
-                    debugRepeat = 3;
-                    setText(messageDebug, L"BBBBBBBBBBBBMessage BROADCAST Received!BBBBBBBBBBBBB");
-                    RELEASE(icyLock);
                 }
                 break;
 
