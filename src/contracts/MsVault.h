@@ -1,7 +1,7 @@
 using namespace QPI;
 
 constexpr uint16 MSVAULT_MAX_OWNERS = 16;
-constexpr uint16 MSVAULT_MAX_COOWNER = 128;
+constexpr uint16 MSVAULT_MAX_COOWNER = 8;
 constexpr uint64 MSVAULT_INITIAL_MAX_VAULTS = 2048ULL;
 constexpr uint64 MSVAULT_MAX_VAULTS = MSVAULT_INITIAL_MAX_VAULTS * X_MULTIPLIER;
 
