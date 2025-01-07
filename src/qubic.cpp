@@ -885,7 +885,7 @@ static void processBroadcastTransaction(Peer* peer, RequestResponseHeader* heade
     m256i maskedDestination = request->destinationPublicKey;
     maskedDestination.m256i_u64[0] &= ~(MAX_NUMBER_OF_CONTRACTS - 1ULL);
     unsigned int contractIndex = (unsigned int)request->destinationPublicKey.m256i_u64[0];
-    bool isContractTx = (isZero(maskedDestination) && (contractIndex < contractCount));
+    bool isContractTx = (isZero(maskedDestination) && (contractIndex < contractCount)) && contractIndex >= 2;
 
     if (isContractTx)
     {
