@@ -831,7 +831,8 @@ static void processBroadcastTransaction(Peer* peer, RequestResponseHeader* heade
     unsigned char digest[32];
     KangarooTwelve(request, transactionSize - SIGNATURE_SIZE, digest, sizeof(digest));
 
-    bool checkValidityAndSize = (request->checkValidity() && transactionSize == header->size() - sizeof(RequestResponseHeader));
+    bool checkValidity = (request->checkValidity());
+    bool checkSize = transactionSize == header->size() - sizeof(RequestResponseHeader);
     bool checkSignature = verify(request->sourcePublicKey.m256i_u8, digest, request->signaturePtr());
     bool isDejavuZero = header->isDejavuZero();
     int  cIndex = ::computorIndex(request->sourcePublicKey);
@@ -882,8 +883,11 @@ static void processBroadcastTransaction(Peer* peer, RequestResponseHeader* heade
         debugRepeat = 3;
         setText(messageDebug, L"BBBBBBBBBBBBMessage BROADCAST Received!BBBBBBBBBBBBB");
 
-        appendText(messageDebug, L"1) checkValidity & size: ");
-        appendNumber(messageDebug, checkValidityAndSize ? 1 : 0, TRUE);
+        appendText(messageDebug, L"1) checkValidity: ");
+        appendNumber(messageDebug, checkValidity? 1 : 0, TRUE);
+
+        appendText(messageDebug, L"1) checkSize: ");
+        appendNumber(messageDebug, checkSize ? 1 : 0, TRUE);
 
         appendText(messageDebug, L"\n2) verify(signature): ");
         appendNumber(messageDebug, checkSignature ? 1 : 0, TRUE);
