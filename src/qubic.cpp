@@ -883,6 +883,15 @@ static void processBroadcastTransaction(Peer* peer, RequestResponseHeader* heade
         debugRepeat = 3;
         setText(messageDebug, L"BBBBBBBBBBBBMessage BROADCAST Received!BBBBBBBBBBBBB");
 
+        appendText(messageDebug, L"\nheader->size() = ");
+        appendNumber(messageDebug, header->size(), TRUE);
+
+        appendText(messageDebug, L"\ntransaction->totalSize() = ");
+        appendNumber(messageDebug, transactionSize, TRUE);
+
+        appendText(messageDebug, L"\nsubtraction = ");
+        appendNumber(messageDebug, header->size() - sizeof(RequestResponseHeader), TRUE);
+
         appendText(messageDebug, L"1) checkValidity: ");
         appendNumber(messageDebug, checkValidity? 1 : 0, TRUE);
 
