@@ -110,7 +110,7 @@ public:
     {
         id vaultName;
         array<id, MSVAULT_MAX_OWNERS> owners;
-        uint32 vaultType;
+        uint64 vaultType;
     };
     struct registerVault_output
     {
