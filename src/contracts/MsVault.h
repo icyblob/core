@@ -108,9 +108,9 @@ public:
     // Procedures and functions' structs
     struct registerVault_input
     {
-        uint16 vaultType;
         id vaultName;
         array<id, MSVAULT_MAX_OWNERS> owners;
+        uint32 vaultType;
     };
     struct registerVault_output
     {
@@ -457,7 +457,7 @@ protected:
             }
         }
 
-        locals.newVault.vaultType = input.vaultType;
+        locals.newVault.vaultType = (uint16)input.vaultType;
         locals.newVault.vaultName = input.vaultName;
         locals.newVault.numberOfOwners = locals.ownerCount;
         locals.newVault.balance = 0;
