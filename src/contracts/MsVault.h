@@ -22,12 +22,12 @@ struct MSVAULT : public ContractBase
 public:
     struct Vault
     {
-        uint16 vaultType;
+        uint64 vaultType;
         id vaultName;
         array<id, MSVAULT_MAX_OWNERS> owners;
-        uint16 numberOfOwners;
+        uint64 numberOfOwners;
         sint64 balance;
-        bit isActive;
+        uint64 isActive;
         array<uint64, MSVAULT_MAX_OWNERS> releaseAmounts;
         array<id, MSVAULT_MAX_OWNERS> releaseDestinations;
     };
@@ -56,7 +56,7 @@ public:
     };
     struct isValidVaultId_output
     {
-        bit result;
+        uint64 result;
     };
     struct isValidVaultId_locals
     {
@@ -83,7 +83,7 @@ public:
     };
     struct isOwnerOfVault_output
     {
-        bit result;
+        uint64 result;
     };
     struct isOwnerOfVault_locals
     {
@@ -102,7 +102,7 @@ public:
     };
     struct resetReleaseRequests_locals
     {
-        sint32 i;
+        sint64 i;
     };
 
     // Procedures and functions' structs
@@ -117,10 +117,10 @@ public:
     };
     struct registerVault_locals
     {
-        uint16 ownerCount;
-        uint16 i;
-        uint16 j;
-        uint16 k;
+        uint64 ownerCount;
+        uint64 i;
+        uint64 j;
+        uint64 k;
         sint64 count;
         sint64 slotIndex;
         Vault newVault;
@@ -162,11 +162,11 @@ public:
         MSVaultLogger logger;
 
         sint64 ownerIndex;
-        uint16 approvals;
-        uint16 totalOwners;
-        bit releaseApproved;
-        uint16 requiredApprovals;
-        uint16 i;
+        uint64 approvals;
+        uint64 totalOwners;
+        sint64 releaseApproved;
+        uint64 requiredApprovals;
+        uint64 i;
 
         uint64 calc;
         uint64 divResult;
@@ -209,8 +209,6 @@ public:
         findOwnerIndexInVault_output fi_out;
         findOwnerIndexInVault_locals fi_locals;
 
-        bit found;
-
         isValidVaultId_input iv_in;
         isValidVaultId_output iv_out;
         isValidVaultId_locals iv_locals;
@@ -239,14 +237,14 @@ public:
     };
     struct getReleaseStatus_output
     {
-        bit status;
+        uint64 status;
         array<uint64, MSVAULT_MAX_OWNERS> amounts;
         array<id, MSVAULT_MAX_OWNERS> destinations;
     };
     struct getReleaseStatus_locals
     {
         Vault vault;
-        uint16 i;
+        uint64 i;
 
         isValidVaultId_input iv_in;
         isValidVaultId_output iv_out;
@@ -259,7 +257,7 @@ public:
     };
     struct getBalanceOf_output
     {
-        bit status;
+        sint64 status;
         sint64 balance;
     };
     struct getBalanceOf_locals
@@ -277,7 +275,7 @@ public:
     };
     struct getVaultName_output
     {
-        bit status;
+        sint64 status;
         id vaultName;
     };
     struct getVaultName_locals
@@ -292,7 +290,7 @@ public:
     struct getRevenueInfo_input {};
     struct getRevenueInfo_output
     {
-        uint32 numberOfActiveVaults;
+        uint64 numberOfActiveVaults;
         uint64 totalRevenue;
         uint64 totalDistributedToShareholders;
     };
@@ -331,7 +329,7 @@ protected:
     // Contract states
     array<Vault, MSVAULT_MAX_VAULTS> vaults;
 
-    uint32 numberOfActiveVaults;
+    uint64 numberOfActiveVaults;
     uint64 totalRevenue;
     uint64 totalDistributedToShareholders;
 
@@ -339,17 +337,17 @@ protected:
     PRIVATE_FUNCTION_WITH_LOCALS(isValidVaultId)
         if (input.vaultId < MSVAULT_MAX_VAULTS)
         {
-            output.result = true;
+            output.result = 1ULL;
         }
         else
         {
-            output.result = false;
+            output.result = 0ULL;
         }
     _
 
     PRIVATE_FUNCTION_WITH_LOCALS(findOwnerIndexInVault)
-        output.index = -1;
-        for (locals.i = 0; locals.i < input.vault.numberOfOwners; locals.i++)
+        output.index = -1LL;
+        for (locals.i = 0LL; locals.i < input.vault.numberOfOwners; locals.i++)
         {
             if (input.vault.owners.get(locals.i) == input.ownerID)
             {
@@ -363,11 +361,11 @@ protected:
         locals.fi_in.vault = input.vault;
         locals.fi_in.ownerID = input.ownerID;
         findOwnerIndexInVault(qpi, state, locals.fi_in, locals.fi_out, locals.fi_locals);
-        output.result = (locals.fi_out.index != -1);
+        output.result = (locals.fi_out.index != -1) ? 1ULL : 0ULL;
     _
 
     PRIVATE_FUNCTION_WITH_LOCALS(resetReleaseRequests)
-        for (locals.i = 0; locals.i < MSVAULT_MAX_OWNERS; locals.i++)
+        for (locals.i = 0ULL; locals.i < MSVAULT_MAX_OWNERS; locals.i++)
         {
             input.vault.releaseAmounts.set(locals.i, 0);
             input.vault.releaseDestinations.set(locals.i, NULL_ID);
@@ -383,8 +381,8 @@ protected:
             return;
         }
 
-        locals.ownerCount = 0;
-        for (locals.i = 0; locals.i < MSVAULT_MAX_OWNERS; locals.i++)
+        locals.ownerCount = 0ULL;
+        for (locals.i = 0ULL; locals.i < MSVAULT_MAX_OWNERS; locals.i++)
         {
             if (input.owners.get(locals.i) != NULL_ID)
             {
@@ -392,40 +390,40 @@ protected:
             }
         }
 
-        if (locals.ownerCount <= 1)
+        if (locals.ownerCount <= 1ULL)
         {
             qpi.transfer(qpi.invocator(), qpi.invocationReward());
             return;
         }
 
         // Find empty slot
-        locals.slotIndex = -1;
-        for (locals.i = 0; locals.i < MSVAULT_MAX_VAULTS; locals.i++)
+        locals.slotIndex = -1LL;
+        for (locals.i = 0ULL; locals.i < MSVAULT_MAX_VAULTS; locals.i++)
         {
             locals.tempVault = state.vaults.get(locals.i);
-            if (!locals.tempVault.isActive && locals.tempVault.numberOfOwners == 0 && locals.tempVault.balance == 0)
+            if (!locals.tempVault.isActive && locals.tempVault.numberOfOwners == 0ULL && locals.tempVault.balance == 0LL)
             {
                 locals.slotIndex = (sint64)locals.i;
                 break;
             }
         }
 
-        if (locals.slotIndex == -1)
+        if (locals.slotIndex == -1LL)
         {
             qpi.transfer(qpi.invocator(), qpi.invocationReward());
             return;
         }
 
-        for (locals.i = 0; locals.i < locals.ownerCount; locals.i++)
+        for (locals.i = 0ULL; locals.i < locals.ownerCount; locals.i++)
         {
             locals.proposedOwner = input.owners.get(locals.i);
-            locals.count = 0;
-            for (locals.j = 0; locals.j < MSVAULT_MAX_VAULTS; locals.j++)
+            locals.count = 0LL;
+            for (locals.j = 0ULL; locals.j < MSVAULT_MAX_VAULTS; locals.j++)
             {
                 locals.tempVault = state.vaults.get(locals.j);
                 if (locals.tempVault.isActive)
                 {
-                    for (locals.k = 0; locals.k < locals.tempVault.numberOfOwners; locals.k++)
+                    for (locals.k = 0ULL; locals.k < locals.tempVault.numberOfOwners; locals.k++)
                     {
                         if (locals.tempVault.owners.get(locals.k) == locals.proposedOwner)
                         {
@@ -441,17 +439,17 @@ protected:
             }
         }
 
-        locals.newVault.vaultType = (uint16)input.vaultType;
+        locals.newVault.vaultType = input.vaultType;
         locals.newVault.vaultName = input.vaultName;
         locals.newVault.numberOfOwners = locals.ownerCount;
-        locals.newVault.balance = 0;
-        locals.newVault.isActive = true;
+        locals.newVault.balance = 0LL;
+        locals.newVault.isActive = 1ULL;
 
         locals.rr_in.vault = locals.newVault;
         resetReleaseRequests(qpi, state, locals.rr_in, locals.rr_out, locals.rr_locals);
         locals.newVault = locals.rr_out.vault;
 
-        for (locals.i = 0; locals.i < locals.ownerCount; locals.i++)
+        for (locals.i = 0ULL; locals.i < locals.ownerCount; locals.i++)
         {
             locals.newVault.owners.set(locals.i, input.owners.get(locals.i));
         }
@@ -553,9 +551,9 @@ protected:
         locals.vault.releaseAmounts.set(locals.ownerIndex, input.amount);
         locals.vault.releaseDestinations.set(locals.ownerIndex, input.destination);
 
-        locals.approvals = 0;
+        locals.approvals = 0ULL;
         locals.totalOwners = locals.vault.numberOfOwners;
-        for (locals.i = 0; locals.i < locals.totalOwners; locals.i++)
+        for (locals.i = 0ULL; locals.i < locals.totalOwners; locals.i++)
         {
             if (locals.vault.releaseAmounts.get(locals.i) == input.amount &&
                 locals.vault.releaseDestinations.get(locals.i) == input.destination)
@@ -564,23 +562,23 @@ protected:
             }
         }
 
-        locals.releaseApproved = false;
+        locals.releaseApproved = 0ULL;
         if (locals.vault.vaultType == MSVAULT_VAULT_TYPE_QUORUM)
         {
-            locals.calc = ((uint64)locals.totalOwners * 2ULL) + 2ULL;
+            locals.calc = (locals.totalOwners * 2ULL) + 2ULL;
             locals.divResult = QPI::div(locals.calc, 3ULL);
-            locals.requiredApprovals = (uint16)locals.divResult;
+            locals.requiredApprovals = locals.divResult;
 
             if (locals.approvals >= locals.requiredApprovals)
             {
-                locals.releaseApproved = true;
+                locals.releaseApproved = 1ULL;
             }
         }
         else if (locals.vault.vaultType == MSVAULT_VAULT_TYPE_TWO_OUT_OF_X)
         {
             if (locals.approvals >= 2)
             {
-                locals.releaseApproved = true;
+                locals.releaseApproved = 1ULL;
             }
         }
 
@@ -696,7 +694,7 @@ protected:
     _
 
     PUBLIC_FUNCTION_WITH_LOCALS(getReleaseStatus)
-        output.status = false;
+        output.status = 0ULL;
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
@@ -711,16 +709,16 @@ protected:
             return; // output.status = false
         }
 
-        for (locals.i = 0; locals.i < locals.vault.numberOfOwners; locals.i++)
+        for (locals.i = 0ULL; locals.i < locals.vault.numberOfOwners; locals.i++)
         {
             output.amounts.set(locals.i, locals.vault.releaseAmounts.get(locals.i));
             output.destinations.set(locals.i, locals.vault.releaseDestinations.get(locals.i));
         }
-        output.status = true;
+        output.status = 1ULL;
     _
 
     PUBLIC_FUNCTION_WITH_LOCALS(getBalanceOf)
-        output.status = false;
+        output.status = 0ULL;
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
@@ -735,11 +733,11 @@ protected:
             return; // output.status = false
         }
         output.balance = locals.vault.balance;
-        output.status = true;
+        output.status = 1ULL;
     _
 
     PUBLIC_FUNCTION_WITH_LOCALS(getVaultName)
-        output.status = false;
+        output.status = 0ULL;
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
@@ -754,7 +752,7 @@ protected:
             return; // output.status = false
         }
         output.vaultName = locals.vault.vaultName;
-        output.status = true;
+        output.status = 1ULL;
     _
 
     PUBLIC_FUNCTION(getRevenueInfo)
@@ -772,7 +770,7 @@ protected:
     _
 
     INITIALIZE
-        state.numberOfActiveVaults = 0;
+        state.numberOfActiveVaults = 0ULL;
         state.totalRevenue = 0ULL;
         state.totalDistributedToShareholders = 0ULL;
     _
@@ -811,15 +809,15 @@ protected:
                     {
                         state.totalRevenue += locals.v.balance;
                     }
-                    locals.v.isActive = false;
-                    locals.v.balance = 0;
-                    locals.v.vaultType = 0;
+                    locals.v.isActive = 0ULL;
+                    locals.v.balance = 0LL;
+                    locals.v.vaultType = 0ULL;
                     locals.v.vaultName = NULL_ID;
-                    locals.v.numberOfOwners = 0;
+                    locals.v.numberOfOwners = 0ULL;
                     for (locals.j = 0; locals.j < MSVAULT_MAX_OWNERS; locals.j++)
                     {
                         locals.v.owners.set(locals.j, NULL_ID);
-                        locals.v.releaseAmounts.set(locals.j, 0);
+                        locals.v.releaseAmounts.set(locals.j, 0ULL);
                         locals.v.releaseDestinations.set(locals.j, NULL_ID);
                     }
                     state.numberOfActiveVaults--;
