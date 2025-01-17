@@ -102,7 +102,7 @@ public:
     };
     struct resetReleaseRequests_locals
     {
-        sint32 i;
+        uint64 i;
     };
 
     // Procedures and functions' structs
