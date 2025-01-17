@@ -165,11 +165,11 @@ public:
         MSVaultLogger logger;
 
         sint64 ownerIndex;
-        uint16 approvals;
-        uint16 totalOwners;
+        uint64 approvals;
+        uint64 totalOwners;
         bit releaseApproved;
-        uint16 requiredApprovals;
-        uint16 i;
+        uint64 requiredApprovals;
+        uint64 i;
 
         uint64 calc;
         uint64 divResult;
@@ -586,9 +586,9 @@ protected:
         locals.releaseApproved = false;
         if (locals.vault.vaultType == MSVAULT_VAULT_TYPE_QUORUM)
         {
-            locals.calc = ((uint64)locals.totalOwners * 2ULL) + 2ULL;
+            locals.calc = (locals.totalOwners * 2ULL) + 2ULL;
             locals.divResult = QPI::div(locals.calc, 3ULL);
-            locals.requiredApprovals = (uint16)locals.divResult;
+            locals.requiredApprovals = locals.divResult;
 
             if (locals.approvals >= locals.requiredApprovals)
             {
