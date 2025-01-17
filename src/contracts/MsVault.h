@@ -26,7 +26,7 @@ public:
         id vaultName;
         array<id, MSVAULT_MAX_OWNERS> owners;
         uint64 numberOfOwners;
-        sint64 balance;
+        uint64 balance;
         bit isActive;
         array<uint64, MSVAULT_MAX_OWNERS> releaseAmounts;
         array<id, MSVAULT_MAX_OWNERS> releaseDestinations;
@@ -556,7 +556,7 @@ protected:
             return;
         }
 
-        if (locals.vault.balance < (sint64)input.amount)
+        if (locals.vault.balance < input.amount)
         {
             locals.logger._type = 5;
             LOG_INFO(locals.logger);
@@ -605,10 +605,10 @@ protected:
         if (locals.releaseApproved)
         {
             // Still need to re-check the balance before releasing funds
-            if (locals.vault.balance >= (sint64)input.amount)
+            if (locals.vault.balance >= input.amount)
             {
                 qpi.transfer(input.destination, input.amount);
-                locals.vault.balance -= (sint64)input.amount;
+                locals.vault.balance -= input.amount;
 
                 locals.rr_in.vault = locals.vault;
                 resetReleaseRequests(qpi, state, locals.rr_in, locals.rr_out, locals.rr_locals);
@@ -815,10 +815,10 @@ protected:
             locals.v = state.vaults.get(locals.i);
             if (locals.v.isActive)
             {
-                if (locals.v.balance >= (sint64)MSVAULT_HOLDING_FEE)
+                if (locals.v.balance >= MSVAULT_HOLDING_FEE)
                 {
                     // pay the holding fee
-                    locals.v.balance -= (sint64)MSVAULT_HOLDING_FEE;
+                    locals.v.balance -= MSVAULT_HOLDING_FEE;
                     state.totalRevenue += MSVAULT_HOLDING_FEE;
                     state.vaults.set(locals.i, locals.v);
                 }
