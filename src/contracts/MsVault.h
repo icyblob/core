@@ -25,7 +25,7 @@ public:
         uint64 vaultType;
         id vaultName;
         array<id, MSVAULT_MAX_OWNERS> owners;
-        uint16 numberOfOwners;
+        uint64 numberOfOwners;
         uint64 balance;
         uint64 isActive;
         array<uint64, MSVAULT_MAX_OWNERS> releaseAmounts;
@@ -350,7 +350,7 @@ protected:
 
     PRIVATE_FUNCTION_WITH_LOCALS(findOwnerIndexInVault)
         output.index = -1;
-        for (locals.i = 0; locals.i < input.vault.numberOfOwners; locals.i++)
+        for (locals.i = 0; locals.i < (sint64)input.vault.numberOfOwners; locals.i++)
         {
             if (input.vault.owners.get(locals.i) == input.ownerID)
             {
