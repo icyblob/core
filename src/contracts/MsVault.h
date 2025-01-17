@@ -117,11 +117,12 @@ public:
     };
     struct registerVault_locals
     {
-        uint16 ownerCount;
-        uint16 i;
-        uint16 j;
-        uint16 k;
-        sint64 count;
+        uint64 ownerCount;
+        uint64 i;
+        sint64 ii;
+        uint64 j;
+        uint64 k;
+        uint64 count;
         sint64 slotIndex;
         Vault newVault;
         Vault tempVault;
@@ -412,12 +413,12 @@ protected:
 
         // Find empty slot
         locals.slotIndex = -1;
-        for (locals.i = 0; locals.i < MSVAULT_MAX_VAULTS; locals.i++)
+        for (locals.ii = 0; locals.ii < MSVAULT_MAX_VAULTS; locals.ii++)
         {
-            locals.tempVault = state.vaults.get(locals.i);
+            locals.tempVault = state.vaults.get(locals.ii);
             if (!locals.tempVault.isActive && locals.tempVault.numberOfOwners == 0 && locals.tempVault.balance == 0)
             {
-                locals.slotIndex = (sint64)locals.i;
+                locals.slotIndex = locals.ii;
                 break;
             }
         }
