@@ -249,7 +249,7 @@ public:
     struct getReleaseStatus_locals
     {
         Vault vault;
-        uint16 i;
+        uint64 i;
 
         isValidVaultId_input iv_in;
         isValidVaultId_output iv_out;
