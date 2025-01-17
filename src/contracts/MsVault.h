@@ -295,7 +295,7 @@ public:
     struct getRevenueInfo_input {};
     struct getRevenueInfo_output
     {
-        uint32 numberOfActiveVaults;
+        uint64 numberOfActiveVaults;
         uint64 totalRevenue;
         uint64 totalDistributedToShareholders;
     };
@@ -334,7 +334,7 @@ protected:
     // Contract states
     array<Vault, MSVAULT_MAX_VAULTS> vaults;
 
-    uint32 numberOfActiveVaults;
+    uint64 numberOfActiveVaults;
     uint64 totalRevenue;
     uint64 totalDistributedToShareholders;
 
@@ -791,7 +791,7 @@ protected:
     _
 
     INITIALIZE
-        state.numberOfActiveVaults = 0;
+        state.numberOfActiveVaults = 0ULL;
         state.totalRevenue = 0ULL;
         state.totalDistributedToShareholders = 0ULL;
     _
