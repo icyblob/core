@@ -22,7 +22,7 @@ struct MSVAULT : public ContractBase
 public:
     struct Vault
     {
-        uint16 vaultType;
+        uint64 vaultType;
         id vaultName;
         array<id, MSVAULT_MAX_OWNERS> owners;
         uint16 numberOfOwners;
@@ -457,7 +457,7 @@ protected:
             }
         }
 
-        locals.newVault.vaultType = (uint16)input.vaultType;
+        locals.newVault.vaultType = input.vaultType;
         locals.newVault.vaultName = input.vaultName;
         locals.newVault.numberOfOwners = locals.ownerCount;
         locals.newVault.balance = 0;
