@@ -848,12 +848,12 @@ protected:
         }
 
         {
-            locals.amountToDistribute = QPI::div(state.totalRevenue - state.totalDistributedToShareholders, (uint64)NUMBER_OF_COMPUTORS);
+            locals.amountToDistribute = QPI::div<uint64>(state.totalRevenue - state.totalDistributedToShareholders, NUMBER_OF_COMPUTORS);
             if (locals.amountToDistribute > 0 && state.totalRevenue > state.totalDistributedToShareholders)
             {
                 if (qpi.distributeDividends(locals.amountToDistribute))
                 {
-                    state.totalDistributedToShareholders += (uint64)locals.amountToDistribute * (uint64)NUMBER_OF_COMPUTORS;
+                    state.totalDistributedToShareholders += locals.amountToDistribute * NUMBER_OF_COMPUTORS;
                 }
             }
         }
