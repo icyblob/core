@@ -260,7 +260,7 @@ public:
     };
     struct getBalanceOf_output
     {
-        bit status;
+        uint64 status;
         sint64 balance;
     };
     struct getBalanceOf_locals
@@ -737,7 +737,7 @@ protected:
     _
 
     PUBLIC_FUNCTION_WITH_LOCALS(getBalanceOf)
-        output.status = false;
+        output.status = 0ULL;
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
@@ -752,7 +752,7 @@ protected:
             return; // output.status = false
         }
         output.balance = locals.vault.balance;
-        output.status = true;
+        output.status = 1ULL;
     _
 
     PUBLIC_FUNCTION_WITH_LOCALS(getVaultName)
