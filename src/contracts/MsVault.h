@@ -83,7 +83,7 @@ public:
     };
     struct isOwnerOfVault_output
     {
-        bit result;
+        uint64 result;
     };
     struct isOwnerOfVault_locals
     {
@@ -366,7 +366,7 @@ protected:
         locals.fi_in.vault = input.vault;
         locals.fi_in.ownerID = input.ownerID;
         findOwnerIndexInVault(qpi, state, locals.fi_in, locals.fi_out, locals.fi_locals);
-        output.result = (locals.fi_out.index != -1);
+        output.result = (locals.fi_out.index != -1) ? 1ULL : 0ULL;
     _
 
     PRIVATE_FUNCTION_WITH_LOCALS(resetReleaseRequests)
@@ -543,7 +543,7 @@ protected:
         locals.io_in.vault = locals.vault;
         locals.io_in.ownerID = qpi.invocator();
         isOwnerOfVault(qpi, state, locals.io_in, locals.io_out, locals.io_locals);
-        if (!locals.io_out.result)
+        if (locals.io_out.result == 0ULL)
         {
             locals.logger._type = 2;
             LOG_INFO(locals.logger);
@@ -670,7 +670,7 @@ protected:
         locals.io_in.vault = locals.vault;
         locals.io_in.ownerID = qpi.invocator();
         isOwnerOfVault(qpi, state, locals.io_in, locals.io_out, locals.io_locals);
-        if (!locals.io_out.result)
+        if (locals.io_out.result == 0ULL)
         {
             locals.logger._type = 2;
             LOG_INFO(locals.logger);
