@@ -167,7 +167,7 @@ public:
         sint64 ownerIndex;
         uint64 approvals;
         uint64 totalOwners;
-        bit releaseApproved;
+        uint64 releaseApproved;
         uint64 requiredApprovals;
         uint64 i;
 
@@ -583,7 +583,7 @@ protected:
             }
         }
 
-        locals.releaseApproved = false;
+        locals.releaseApproved = 0ULL;
         if (locals.vault.vaultType == MSVAULT_VAULT_TYPE_QUORUM)
         {
             locals.calc = (locals.totalOwners * 2ULL) + 2ULL;
@@ -592,18 +592,18 @@ protected:
 
             if (locals.approvals >= locals.requiredApprovals)
             {
-                locals.releaseApproved = true;
+                locals.releaseApproved = 1ULL;
             }
         }
         else if (locals.vault.vaultType == MSVAULT_VAULT_TYPE_TWO_OUT_OF_X)
         {
             if (locals.approvals >= 2)
             {
-                locals.releaseApproved = true;
+                locals.releaseApproved = 1ULL;
             }
         }
 
-        if (locals.releaseApproved)
+        if (locals.releaseApproved == 1ULL)
         {
             // Still need to re-check the balance before releasing funds
             if (locals.vault.balance >= input.amount)
