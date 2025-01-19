@@ -27,7 +27,7 @@ public:
         array<id, MSVAULT_MAX_OWNERS> owners;
         uint16 numberOfOwners;
         uint64 balance;
-        bit isActive;
+        uint64 isActive;
         array<uint64, MSVAULT_MAX_OWNERS> releaseAmounts;
         array<id, MSVAULT_MAX_OWNERS> releaseDestinations;
     };
@@ -438,7 +438,7 @@ protected:
             for (locals.j = 0; locals.j < MSVAULT_MAX_VAULTS; locals.j++)
             {
                 locals.tempVault = state.vaults.get(locals.j);
-                if (locals.tempVault.isActive)
+                if (locals.tempVault.isActive == 1ULL)
                 {
                     for (locals.k = 0; locals.k < locals.tempVault.numberOfOwners; locals.k++)
                     {
@@ -462,7 +462,7 @@ protected:
         locals.newVault.vaultName = input.vaultName;
         locals.newVault.numberOfOwners = (uint16)locals.ownerCount;
         locals.newVault.balance = 0;
-        locals.newVault.isActive = true;
+        locals.newVault.isActive = 1ULL;
 
         locals.rr_in.vault = locals.newVault;
         resetReleaseRequests(qpi, state, locals.rr_in, locals.rr_out, locals.rr_locals);
@@ -497,7 +497,7 @@ protected:
         }
 
         locals.vault = state.vaults.get(input.vaultId);
-        if (!locals.vault.isActive)
+        if (locals.vault.isActive == 0ULL)
         {
             qpi.transfer(qpi.invocator(), qpi.invocationReward());
             return;
@@ -533,7 +533,7 @@ protected:
 
         locals.vault = state.vaults.get(input.vaultId);
 
-        if (!locals.vault.isActive)
+        if (locals.vault.isActive == 0ULL)
         {
             locals.logger._type = 1;
             LOG_INFO(locals.logger);
@@ -660,7 +660,7 @@ protected:
 
         locals.vault = state.vaults.get(input.vaultId);
 
-        if (!locals.vault.isActive)
+        if (locals.vault.isActive == 0ULL)
         {
             locals.logger._type = 1;
             LOG_INFO(locals.logger);
@@ -697,7 +697,7 @@ protected:
         for (locals.i = 0ULL; locals.i < MSVAULT_MAX_VAULTS; locals.i++)
         {
             locals.v = state.vaults.get(locals.i);
-            if (locals.v.isActive)
+            if (locals.v.isActive == 1ULL)
             {
                 for (locals.j = 0ULL; locals.j < locals.v.numberOfOwners; locals.j++)
                 {
@@ -725,7 +725,7 @@ protected:
         }
 
         locals.vault = state.vaults.get(input.vaultId);
-        if (!locals.vault.isActive)
+        if (locals.vault.isActive = 0ULL)
         {
             return; // output.status = false
         }
@@ -749,7 +749,7 @@ protected:
         }
 
         locals.vault = state.vaults.get(input.vaultId);
-        if (!locals.vault.isActive)
+        if (locals.vault.isActive == 0ULL)
         {
             return; // output.status = false
         }
@@ -768,7 +768,7 @@ protected:
         }
 
         locals.vault = state.vaults.get(input.vaultId);
-        if (!locals.vault.isActive)
+        if (locals.vault.isActive == 0ULL)
         {
             return; // output.status = false
         }
@@ -814,7 +814,7 @@ protected:
         for (locals.i = 0ULL; locals.i < MSVAULT_MAX_VAULTS; locals.i++)
         {
             locals.v = state.vaults.get(locals.i);
-            if (locals.v.isActive)
+            if (locals.v.isActive == 1ULL)
             {
                 if (locals.v.balance >= MSVAULT_HOLDING_FEE)
                 {
@@ -830,7 +830,7 @@ protected:
                     {
                         state.totalRevenue += locals.v.balance;
                     }
-                    locals.v.isActive = false;
+                    locals.v.isActive = 0ULL;
                     locals.v.balance = 0;
                     locals.v.vaultType = 0;
                     locals.v.vaultName = NULL_ID;
