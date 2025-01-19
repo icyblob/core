@@ -240,7 +240,7 @@ public:
     };
     struct getReleaseStatus_output
     {
-        bit status;
+        uint64 status;
         array<uint64, MSVAULT_MAX_OWNERS> amounts;
         array<id, MSVAULT_MAX_OWNERS> destinations;
     };
@@ -713,7 +713,7 @@ protected:
     _
 
     PUBLIC_FUNCTION_WITH_LOCALS(getReleaseStatus)
-        output.status = false;
+        output.status = 0ULL;
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
@@ -733,7 +733,7 @@ protected:
             output.amounts.set(locals.i, locals.vault.releaseAmounts.get(locals.i));
             output.destinations.set(locals.i, locals.vault.releaseDestinations.get(locals.i));
         }
-        output.status = true;
+        output.status = 1ULL;
     _
 
     PUBLIC_FUNCTION_WITH_LOCALS(getBalanceOf)
