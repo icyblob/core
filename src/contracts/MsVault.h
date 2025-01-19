@@ -56,7 +56,7 @@ public:
     };
     struct isValidVaultId_output
     {
-        bit result;
+        uint64 result;
     };
     struct isValidVaultId_locals
     {
@@ -342,11 +342,11 @@ protected:
     PRIVATE_FUNCTION_WITH_LOCALS(isValidVaultId)
         if (input.vaultId < MSVAULT_MAX_VAULTS)
         {
-            output.result = true;
+            output.result = 1ULL;
         }
         else
         {
-            output.result = false;
+            output.result = 0ULL;
         }
     _
 
@@ -490,7 +490,7 @@ protected:
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
-        if (!locals.iv_out.result)
+        if (locals.iv_out.result == 0ULL)
         {
             qpi.transfer(qpi.invocator(), qpi.invocationReward());
             return;
@@ -524,7 +524,7 @@ protected:
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
-        if (!locals.iv_out.result)
+        if (locals.iv_out.result == 0ULL)
         {
             locals.logger._type = 1;
             LOG_INFO(locals.logger);
@@ -651,7 +651,7 @@ protected:
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
-        if (!locals.iv_out.result)
+        if (locals.iv_out.result == 0ULL)
         {
             locals.logger._type = 1;
             LOG_INFO(locals.logger);
@@ -719,7 +719,7 @@ protected:
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
-        if (!locals.iv_out.result)
+        if (locals.iv_out.result == 0ULL)
         {
             return; // output.status = false
         }
@@ -743,7 +743,7 @@ protected:
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
-        if (!locals.iv_out.result)
+        if (locals.iv_out.result == 0ULL)
         {
             return; // output.status = false
         }
@@ -762,7 +762,7 @@ protected:
         locals.iv_in.vaultId = input.vaultId;
         isValidVaultId(qpi, state, locals.iv_in, locals.iv_out, locals.iv_locals);
 
-        if (!locals.iv_out.result)
+        if (locals.iv_out.result == 0ULL)
         {
             return; // output.status = false
         }
