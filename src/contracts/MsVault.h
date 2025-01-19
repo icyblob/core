@@ -212,8 +212,6 @@ public:
         findOwnerIndexInVault_output fi_out;
         findOwnerIndexInVault_locals fi_locals;
 
-        bit found;
-
         isValidVaultId_input iv_in;
         isValidVaultId_output iv_out;
         isValidVaultId_locals iv_locals;
