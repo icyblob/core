@@ -868,17 +868,17 @@ protected:
                         state.totalRevenue += locals.v.balance;
                     }
                     locals.v.isActive = false;
-                    locals.v.balance = 0;
-                    locals.v.vaultType = 0;
+                    locals.v.balance = 0ULL;
+                    locals.v.vaultType = 0ULL;
                     locals.v.vaultName = NULL_ID;
-                    locals.v.numberOfOwners = 0;
+                    locals.v.numberOfOwners = (uint16)0;
                     for (locals.j = 0; locals.j < MSVAULT_MAX_OWNERS; locals.j++)
                     {
                         locals.v.owners.set(locals.j, NULL_ID);
-                        locals.v.releaseAmounts.set(locals.j, 0);
+                        locals.v.releaseAmounts.set(locals.j, 0ULL);
                         locals.v.releaseDestinations.set(locals.j, NULL_ID);
                     }
-                    state.numberOfActiveVaults--;
+                    state.numberOfActiveVaults = state.numberOfActiveVaults - 1ULL;
                     state.vaults.set(locals.i, locals.v);
                 }
             }
@@ -890,7 +890,7 @@ protected:
             {
                 if (qpi.distributeDividends(locals.amountToDistribute))
                 {
-                    state.totalDistributedToShareholders += locals.amountToDistribute * NUMBER_OF_COMPUTORS;
+                    state.totalDistributedToShareholders += (uint64)locals.amountToDistribute * NUMBER_OF_COMPUTORS;
                 }
             }
         }
