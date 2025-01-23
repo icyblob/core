@@ -5192,6 +5192,17 @@ static bool loadComputer(CHAR16* directory, bool forceLoadFromFile)
     {
         if (contractDescriptions[contractIndex].constructionEpoch == system.epoch && !forceLoadFromFile)
         {
+            ACQUIRE(icyLock);
+            debugRepeat = 100;
+            setText(messageDebug, L"22222222222222222");
+
+            appendText(messageDebug, L"\ncontract index = ");
+            appendNumber(messageDebug, contractIndex, TRUE);
+
+            appendText(messageDebug, L"\ncontract size = ");
+            appendNumber(messageDebug, contractDescriptions[contractIndex].stateSize, TRUE);
+
+            RELEASE(icyLock);
             bs->SetMem(contractStates[contractIndex], contractDescriptions[contractIndex].stateSize, 0);
         }
         else
@@ -5209,9 +5220,26 @@ static bool loadComputer(CHAR16* directory, bool forceLoadFromFile)
                     appendText(message, L"(");
                     appendText(message, CONTRACT_FILE_NAME);
                     appendText(message, L" not loaded but initialized with zeros for IPO) ");
+                    {
+                        ACQUIRE(icyLock);
+                        debugRepeat = 100;
+                        setText(messageDebug, L"333333333333333");
+
+                        appendText(messageDebug, L"\ncontract index = ");
+                        appendNumber(messageDebug, contractIndex, TRUE);
+
+                        appendText(messageDebug, L"\ncontract size = ");
+                        appendNumber(messageDebug, contractDescriptions[contractIndex].stateSize, TRUE);
+
+                        RELEASE(icyLock);
+                    }
                 }
                 else
                 {
+                    ACQUIRE(icyLock);
+                    debugRepeat = 100;
+                    setText(messageDebug, L"444444444");
+                    RELEASE(icyLock);
                     logStatusToConsole(L"EFI_FILE_PROTOCOL.Read() reads invalid number of bytes", loadedSize, __LINE__);
                     return false;
                 }
