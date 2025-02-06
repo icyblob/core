@@ -141,6 +141,12 @@ public:
 TEST(ContractMsVault, RegisterVault_InsufficientFee)
 {
     ContractTestingMsVault msVault;
+    uint64 assetName = assetNameFromString("MSVAULT");
+    std::cout << "msvault asset name:" << assetName << std::endl;
+
+    uint64 assetName2 = assetNameFromString("QVAULT");
+    std::cout << "qvault asset name:" << assetName2 << std::endl;
+    std::cout << "msvault size:" << sizeof(MSVAULT) << std::endl;
 
     // Check how many vaults OWNER1 has initially
     auto vaultsO1Before = msVault.getVaults(OWNER1);
