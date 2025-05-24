@@ -30,7 +30,7 @@ constexpr uint64 QUTIL_MAX_OPTIONS = 64; // Maximum voting options (0 to 63)
 constexpr uint64 QUTIL_MAX_ASSETS_PER_POLL = 16; // Maximum assets per poll
 constexpr sint64 QUTIL_VOTE_FEE = 100LL; // Fee for voting, burnt 100%
 constexpr sint64 QUTIL_POLL_CREATION_FEE = 10000000LL; // Fee for poll creation to prevent spam
-constexpr uint16 QUTIL_POLL_INIT_EPOCH = 162; // Epoch to initialize poll-related state
+constexpr uint16 QUTIL_POLL_INIT_EPOCH = 163; // Epoch to initialize poll-related state
 
 
 // Voting log types enum
@@ -1037,7 +1037,6 @@ public:
             locals.default_poll.creator = NULL_ID;
             locals.default_poll.num_assets = 0;
 
-            // Initialize zero_link to all zeros for poll_links
             for (locals.j = 0; locals.j < 256; locals.j++)
             {
                 locals.zero_link.set(locals.j, 0);
