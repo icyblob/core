@@ -7,6 +7,7 @@
 #include "platform/file_io.h"
 #include "platform/time_stamp_counter.h"
 #include "platform/memory_util.h"
+#include "platform/profiling.h"
 
 #include "network_messages/assets.h"
 
@@ -108,6 +109,8 @@ public: // TODO: make protected
         // Rebuild lists from assets array (includes reset)
         void rebuild()
         {
+            PROFILE_SCOPE();
+
             reset();
             for (int index = 0; index < ASSETS_CAPACITY; index++)
             {
@@ -136,6 +139,8 @@ GLOBAL_VAR_DECL AssetStorage as;
 // Return index of issuance in assets array / universe or NO_ASSET_INDEX is not found.
 static unsigned int issuanceIndex(const m256i& issuer, unsigned long long assetName)
 {
+    PROFILE_SCOPE();
+
     unsigned int idx = issuer.m256i_u32[0] & (ASSETS_CAPACITY - 1);
     while (assets[idx].varStruct.issuance.type != EMPTY)
     {
@@ -192,6 +197,8 @@ static void deinitAssets()
 static long long issueAsset(const m256i& issuerPublicKey, const char name[7], char numberOfDecimalPlaces, const char unitOfMeasurement[7], long long numberOfShares, unsigned short managingContractIndex,
     int* issuanceIndex, int* ownershipIndex, int* possessionIndex)
 {
+    PROFILE_SCOPE();
+
     *issuanceIndex = issuerPublicKey.m256i_u32[0] & (ASSETS_CAPACITY - 1);
 
     ACQUIRE(universeLock);
@@ -280,6 +287,8 @@ static sint64 numberOfShares(
     const AssetOwnershipSelect& ownership = AssetOwnershipSelect::any(),
     const AssetPossessionSelect& possession = AssetPossessionSelect::any())
 {
+    PROFILE_SCOPE();
+
     ACQUIRE(universeLock);
 
     sint64 numOfShares = 0;
@@ -313,6 +322,8 @@ static bool transferShareManagementRights(int sourceOwnershipIndex, int sourcePo
     int* destinationOwnershipIndexPtr, int* destinationPossessionIndexPtr,
     bool lock)
 {
+    PROFILE_SCOPE();
+
     if (numberOfShares <= 0)
     {
         return false;
@@ -444,7 +455,9 @@ static bool transferShareOwnershipAndPossession(int sourceOwnershipIndex, int so
     int* destinationOwnershipIndex, int* destinationPossessionIndex,
     bool lock)
 {
-    if (numberOfShares <= 0 || isZero(destinationPublicKey))
+    PROFILE_SCOPE();
+
+    if (numberOfShares <= 0)
     {
         return false;
     }
@@ -454,6 +467,8 @@ static bool transferShareOwnershipAndPossession(int sourceOwnershipIndex, int so
         ACQUIRE(universeLock);
     }
 
+    ASSERT(sourceOwnershipIndex >= 0 && sourceOwnershipIndex < ASSETS_CAPACITY);
+    ASSERT(sourcePossessionIndex >= 0 && sourcePossessionIndex < ASSETS_CAPACITY);
     if (assets[sourceOwnershipIndex].varStruct.ownership.type != OWNERSHIP || assets[sourceOwnershipIndex].varStruct.ownership.numberOfShares < numberOfShares
         || assets[sourcePossessionIndex].varStruct.possession.type != POSSESSION || assets[sourcePossessionIndex].varStruct.possession.numberOfShares < numberOfShares
         || assets[sourcePossessionIndex].varStruct.possession.ownershipIndex != sourceOwnershipIndex)
@@ -466,6 +481,61 @@ static bool transferShareOwnershipAndPossession(int sourceOwnershipIndex, int so
         return false;
     }
 
+    // Special case: all-zero destination means burning shares
+    if (isZero(destinationPublicKey))
+    {
+        // Don't allow burning of contract shares
+        const unsigned int issuanceIndex = assets[sourceOwnershipIndex].varStruct.ownership.issuanceIndex;
+        ASSERT(issuanceIndex < ASSETS_CAPACITY);
+        const auto& issuance = assets[issuanceIndex].varStruct.issuance;
+        ASSERT(issuance.type == ISSUANCE);
+        if (isZero(issuance.publicKey))
+        {
+            if (lock)
+            {
+                RELEASE(universeLock);
+            }
+
+            return false;
+        }
+
+        // Burn by subtracting shares from source records
+        assets[sourceOwnershipIndex].varStruct.ownership.numberOfShares -= numberOfShares;
+        assets[sourcePossessionIndex].varStruct.possession.numberOfShares -= numberOfShares;
+        assetChangeFlags[sourceOwnershipIndex >> 6] |= (1ULL << (sourceOwnershipIndex & 63));
+        assetChangeFlags[sourcePossessionIndex >> 6] |= (1ULL << (sourcePossessionIndex & 63));
+
+        if (lock)
+        {
+            RELEASE(universeLock);
+        }
+
+        AssetOwnershipChange assetOwnershipChange;
+        assetOwnershipChange.sourcePublicKey = assets[sourceOwnershipIndex].varStruct.ownership.publicKey;
+        assetOwnershipChange.destinationPublicKey = destinationPublicKey;
+        assetOwnershipChange.issuerPublicKey = issuance.publicKey;
+        assetOwnershipChange.numberOfShares = numberOfShares;
+        *((unsigned long long*) & assetOwnershipChange.name) = *((unsigned long long*) & issuance.name); // Order must be preserved!
+        assetOwnershipChange.numberOfDecimalPlaces = issuance.numberOfDecimalPlaces; // Order must be preserved!
+        *((unsigned long long*) & assetOwnershipChange.unitOfMeasurement) = *((unsigned long long*) & issuance.unitOfMeasurement); // Order must be preserved!
+        logger.logAssetOwnershipChange(assetOwnershipChange);
+
+        AssetPossessionChange assetPossessionChange;
+        assetPossessionChange.sourcePublicKey = assets[sourcePossessionIndex].varStruct.possession.publicKey;
+        assetPossessionChange.destinationPublicKey = destinationPublicKey;
+        assetPossessionChange.issuerPublicKey = issuance.publicKey;
+        assetPossessionChange.numberOfShares = numberOfShares;
+        *((unsigned long long*) & assetPossessionChange.name) = *((unsigned long long*) & issuance.name); // Order must be preserved!
+        assetPossessionChange.numberOfDecimalPlaces = issuance.numberOfDecimalPlaces; // Order must be preserved!
+        *((unsigned long long*) & assetPossessionChange.unitOfMeasurement) = *((unsigned long long*) & issuance.unitOfMeasurement); // Order must be preserved!
+        logger.logAssetPossessionChange(assetPossessionChange);
+
+        return true;
+    }
+
+    // Default case: transfer shares to destinationPublicKey
+    ASSERT(destinationOwnershipIndex != nullptr);
+    ASSERT(destinationPossessionIndex != nullptr);
     *destinationOwnershipIndex = destinationPublicKey.m256i_u32[0] & (ASSETS_CAPACITY - 1);
 iteration:
     if (assets[*destinationOwnershipIndex].varStruct.ownership.type == EMPTY
@@ -557,6 +627,8 @@ iteration:
 
 static long long numberOfPossessedShares(unsigned long long assetName, const m256i& issuer, const m256i& owner, const m256i& possessor, unsigned short ownershipManagingContractIndex, unsigned short possessionManagingContractIndex)
 {
+    PROFILE_SCOPE();
+
     ACQUIRE(universeLock);
 
     int issuanceIndex = issuer.m256i_u32[0] & (ASSETS_CAPACITY - 1);
@@ -637,6 +709,8 @@ iteration:
 // Should only be called from tick processor to avoid concurrent asset state changes, which may cause race conditions
 static void getUniverseDigest(m256i& digest)
 {
+    PROFILE_SCOPE();
+
     unsigned int digestIndex;
     for (digestIndex = 0; digestIndex < ASSETS_CAPACITY; digestIndex++)
     {
@@ -670,6 +744,8 @@ static void getUniverseDigest(m256i& digest)
 
 static bool saveUniverse(const CHAR16* fileName = UNIVERSE_FILE_NAME, const CHAR16* directory = NULL)
 {
+    PROFILE_SCOPE();
+
     logToConsole(L"Saving universe file...");
 
     const unsigned long long beginningTick = __rdtsc();
@@ -692,6 +768,8 @@ static bool saveUniverse(const CHAR16* fileName = UNIVERSE_FILE_NAME, const CHAR
 
 static bool loadUniverse(const CHAR16* fileName = UNIVERSE_FILE_NAME, CHAR16* directory = NULL)
 {
+    PROFILE_SCOPE();
+
     long long loadedSize = load(fileName, ASSETS_CAPACITY * sizeof(AssetRecord), (unsigned char*)assets, directory);
     if (loadedSize != ASSETS_CAPACITY * sizeof(AssetRecord))
     {
@@ -705,6 +783,8 @@ static bool loadUniverse(const CHAR16* fileName = UNIVERSE_FILE_NAME, CHAR16* di
 
 static void assetsEndEpoch()
 {
+    PROFILE_SCOPE();
+
     ACQUIRE(universeLock);
 
     // rebuild asset hash map, getting rid of all elements with zero shares
