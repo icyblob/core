@@ -2449,10 +2449,10 @@ public:
             state.mOperationParams.eligibleOracles.cleanup();
             state.mOperationParams.discountedFeeForUsers.cleanup();
             setMemory(state.mQtryGov, 0);
-            state.mQtryGov.mOperationId = ID(_M, _E, _F, _K, _Y, _F, _C, _D, _X, _D, _U, _I, _L, _C, _A, _J,
-                                             _K, _O, _I, _K, _W, _Q, _A, _P, _E, _N, _J, _D, _U, _H, _S, _S,
-                                             _Y, _P, _B, _R, _W, _F, _O, _T, _L, _A, _L, _I, _L, _A, _Y, _W,
-                                             _Q, _F, _D, _S, _I, _T, _J, _E); // testnet ARB
+            state.mQtryGov.mOperationId = ID(_O, _S, _D, _N, _E, _T, _V, _S, _E, _Y, _M, _C, _F, _F, _W, _D,
+                                             _A, _Y, _R, _M, _S, _K, _C, _D, _X, _H, _S, _A, _W, _V, _U, _K,
+                                             _G, _Y, _E, _K, _B, _C, _W, _P, _E, _E, _H, _D, _W, _F, _L, _P,
+                                             _D, _R, _I, _J, _V, _F, _R, _D); // OSDNETVSEYMCFFWDAYRMSKCDXHSAWVUKGYEKBCWPEEHDWFLPDRIJVFRD
             state.mQtryGov.mBurnFee = 1;
             state.mQtryGov.mOperationFee = 5; // 0.5%
             state.mQtryGov.mShareHolderFee = 10; // 1%
